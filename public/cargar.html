@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cargar datos · Panel Tipszum</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--navy:#1e3a6e;--thead:#3d63b0;--ink:#1f2937;--ink2:#6b7a90;
+--line:#e3e8f0;--green:#188a55;--red:#c8353a;--amber:#c78200;--soft:#f7f9fc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#fff;padding:18px 22px}
+header h1{margin:0;font-size:19px;font-weight:700}
+header p{margin:4px 0 0;font-size:13px;opacity:.85}
+header a{color:#cfe0ff}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px}
+.card h2{margin:0 0 3px;font-size:15px;font-weight:700;color:var(--navy)}
+.card h2 .n{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--thead);color:#fff;
+  font-size:12px;align-items:center;justify-content:center;margin-right:8px;vertical-align:1px}
+.sub{font-size:13px;color:var(--ink2);margin:0 0 14px}
+.drop{border:2px dashed #c4d0e4;border-radius:10px;padding:30px 20px;text-align:center;background:var(--soft);
+  cursor:pointer;transition:.15s}
+.drop:hover,.drop.over{border-color:var(--thead);background:#eef3fb}
+.drop b{color:var(--navy)}
+.drop small{display:block;color:var(--ink2);margin-top:6px;font-size:12.5px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--thead);color:#fff;text-align:left;padding:7px 10px;font-weight:600;font-size:12.5px}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:700}
+.t-meta{background:#e8eefb;color:#2a4f9e}.t-pp{background:#e7f7ee;color:#0f6b41}
+.t-q{background:#fdeef6;color:#a3216b}.t-bad{background:#fdeced;color:#8e2226}
+button{font:inherit;border:0;border-radius:7px;padding:9px 16px;cursor:pointer;font-weight:650}
+.b1{background:var(--navy);color:#fff}.b1:disabled{background:#aab4c4;cursor:not-allowed}
+.b2{background:#fff;color:var(--navy);border:1px solid #c4d0e4}
+.b3{background:var(--green);color:#fff}.b3:disabled{background:#aab4c4;cursor:not-allowed}
+.bx{background:#fff;color:var(--red);border:1px solid #e8b9bb;padding:5px 10px;font-size:12.5px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+label.f{display:block;font-size:12px;color:var(--ink2);margin-bottom:3px;font-weight:600}
+input[type=text],input[type=number],input[type=password]{font:inherit;padding:7px 10px;border:1px solid #c4d0e4;
+  border-radius:7px;background:#fff;width:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+.kpi .l{font-size:11.5px;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.kpi .v{font-size:19px;font-weight:750;color:var(--navy);margin-top:3px}
+.chk{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:flex-start}
+.chk:last-child{border-bottom:0}
+.chk .i{flex:0 0 18px;font-weight:800;text-align:center}
+.ok .i{color:var(--green)}.warn .i{color:var(--amber)}.bad .i{color:var(--red)}
+.chk small{display:block;color:var(--ink2);font-size:12.5px}
+pre{background:#10182a;color:#d6e2f5;padding:13px;border-radius:8px;overflow:auto;font-size:12px;
+  line-height:1.55;max-height:340px;margin:0}
+details summary{cursor:pointer;font-size:13px;color:var(--thead);font-weight:650;padding:5px 0}
+.msg{padding:11px 13px;border-radius:8px;font-size:13.5px;margin-top:12px}
+.m-ok{background:#e7f7ee;color:#0f6b41;border:1px solid #b7e3cb}
+.m-bad{background:#fdeced;color:#8e2226;border:1px solid #e8b9bb}
+.m-w{background:#fff8e8;color:#8a5d00;border:1px solid #f0dca8}
+.mini{font-size:12px;color:var(--ink2)}
+.hide{display:none}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:7px}
+@keyframes sp{to{transform:rotate(360deg)}}
+code{background:#eef2f8;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Cargar datos · Panel Tipszum</h1>
+  <p>Arrastra los archivos, revisa el cuadre y publica. Sin Python, sin terminal. · <a href="index.html">Ir al panel</a></p>
+</header>
+<main>
+
+<!-- 1 · archivos -->
+<div class="card">
+  <h2><span class="n">1</span>Los archivos del ciclo</h2>
+  <p class="sub">El export de Meta (<code>.xlsx</code>) y las extracciones de PremiumPay o Quanty (<code>.json</code>).
+     Puedes soltar varios a la vez: se reconocen por su contenido, no por el nombre.</p>
+  <div class="drop" id="drop">
+    <b>Suelta aquí los archivos</b> o haz clic para elegirlos
+    <small>.xlsx de Meta Ads · .json de PremiumPay · .json de Quanty</small>
+  </div>
+  <input type="file" id="file" multiple accept=".xlsx,.xls,.json" class="hide">
+  <div id="lista" class="hide" style="margin-top:14px"><table><thead><tr>
+    <th>Archivo</th><th>Tipo</th><th>Contenido</th><th style="width:40px"></th></tr></thead><tbody></tbody></table></div>
+  <div id="f-msg"></div>
+</div>
+
+<!-- 2 · generar -->
+<div class="card">
+  <h2><span class="n">2</span>Generar <code>data.json</code></h2>
+  <p class="sub">Se ejecuta el mismo <code>build.py</code> que usas en local, aquí en el navegador.
+     La primera vez tarda algo más porque descarga Python.</p>
+  <div class="row" style="align-items:flex-end">
+    <div style="width:150px"><label class="f">Tipo de cambio USD→EUR</label>
+      <input type="number" id="fx" step="0.0001" min="0.1" max="2" value="0.8673"></div>
+    <button class="b1" id="go" disabled>Generar</button>
+    <span class="mini" id="go-hint">Añade al menos un .xlsx y un .json</span>
+  </div>
+  <div id="g-msg"></div>
+</div>
+
+<!-- 3 · resultado -->
+<div class="card hide" id="res">
+  <h2><span class="n">3</span>Qué ha salido</h2>
+  <p class="sub">Contrasta estas cifras con Meta y con PremiumPay antes de publicar.</p>
+  <div class="grid" id="kpis"></div>
+  <div style="margin-top:16px"><div id="checks"></div></div>
+  <details style="margin-top:12px"><summary>Ver la salida completa del script</summary>
+    <pre id="log" style="margin-top:8px"></pre></details>
+</div>
+
+<!-- 4 · publicar -->
+<div class="card hide" id="pub">
+  <h2><span class="n">4</span>Publicar</h2>
+  <p class="sub">Descárgalo y súbelo tú, o publícalo directo en GitHub y que Cloudflare lo despliegue solo.</p>
+  <div class="row">
+    <button class="b2" id="dl">Descargar data.json</button>
+    <button class="b3" id="push" disabled>Publicar en GitHub</button>
+  </div>
+  <details style="margin-top:14px" id="ghbox"><summary>Ajustes de GitHub y token</summary>
+    <div class="grid" style="margin-top:10px">
+      <div><label class="f">Usuario u organización</label><input type="text" id="gh-own" placeholder="asecas-tipszum"></div>
+      <div><label class="f">Repositorio</label><input type="text" id="gh-rep" placeholder="tipszum-dashboard"></div>
+      <div><label class="f">Ruta del archivo</label><input type="text" id="gh-pth" placeholder="public/data.json"></div>
+      <div><label class="f">Rama</label><input type="text" id="gh-brc" placeholder="main"></div>
+    </div>
+    <div style="margin-top:10px"><label class="f">Token personal (fine-grained · solo este repo · Contents: Read and write)</label>
+      <input type="password" id="gh-tok" placeholder="github_pat_..."></div>
+    <div class="row" style="margin-top:10px">
+      <button class="b2" id="gh-save">Guardar en este navegador</button>
+      <button class="bx" id="gh-clear">Borrar el token</button>
+      <span class="mini" id="gh-est"></span></div>
+    <p class="mini" style="margin:10px 0 0">El token se queda en <code>localStorage</code> de tu navegador y no viaja a ningún
+      sitio más que a la API de GitHub. Cada persona usa el suyo, así los commits llevan su nombre.</p>
+  </details>
+  <div id="p-msg"></div>
+</div>
+
+</main>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=n=>(n||0).toLocaleString('es-ES',{maximumFractionDigits:0});
+const ef=n=>(isFinite(n)&&n!=null?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const msg=(el,cls,html)=>{$(el).innerHTML=`<div class="msg ${cls}">${html}</div>`};
+const clr=el=>{$(el).innerHTML=''};
+
+/* ═══════════ 1 · archivos ═══════════ */
+/* El tipo se decide mirando dentro, no por el nombre: un "data (1).json" o un
+   export renombrado se reconocen igual. */
+let FILES=[];
+function tipoDe(nombre,texto){
+  if(/\.xlsx?$/i.test(nombre))return{t:'meta',et:'Meta Ads',cls:'t-meta',info:'Se lee al generar'};
+  try{
+    const j=JSON.parse(texto);
+    if(!Array.isArray(j.suscriptores))
+      return{t:'?',et:'No reconocido',cls:'t-bad',info:'Un .json sin <code>suscriptores</code>: ¿es un data.json o un config.json?'};
+    const e0=((j.canales||[{}])[0]||{}).enlaces||[{}];
+    const q=('daily' in j)||j.version===3||('meta_campaign_id' in (e0[0]||{}));
+    const nEnl=(j.canales||[]).reduce((a,c)=>a+((c.enlaces||[]).length),0);
+    return{t:q?'quanty':'pp',et:q?'Quanty':'PremiumPay',cls:q?'t-q':'t-pp',
+      info:`${nf((j.canales||[]).length)} canales · ${nf(nEnl)} enlaces · ${nf(j.suscriptores.length)} suscriptores`
+        +(j.rango?` · ${esc(j.rango.desde)} → ${esc(j.rango.hasta)}`:'')
+        +(q&&('daily' in j)?' <span class="mini">(su daily se ignora)</span>':'')};
+  }catch(e){return{t:'?',et:'No es JSON válido',cls:'t-bad',info:esc(e.message)}}
+}
+async function addFiles(fl){
+  /* Copia antes de nada: una FileList es viva, y al limpiar el input (o al soltar
+     otro lote) se vacía a mitad del bucle y se pierden todos menos el primero. */
+  for(const f of [...fl]){
+    if(FILES.some(x=>x.name===f.name&&x.size===f.size))continue;
+    const buf=await f.arrayBuffer();
+    const esX=/\.xlsx?$/i.test(f.name);
+    const txt=esX?'':new TextDecoder('utf-8').decode(buf);
+    FILES.push({name:f.name,size:f.size,buf,...tipoDe(f.name,txt)});
+  }
+  pinta();
+}
+function pinta(){
+  const L=$('lista');
+  if(!FILES.length){L.classList.add('hide');clr('f-msg');sync();return}
+  L.classList.remove('hide');
+  L.querySelector('tbody').innerHTML=FILES.map((f,i)=>`<tr>
+    <td><b>${esc(f.name)}</b><br><span class="mini">${nf(f.size/1024)} KB</span></td>
+    <td><span class="tag ${f.cls}">${f.et}</span></td>
+    <td>${f.info}</td>
+    <td><button class="bx" data-x="${i}">Quitar</button></td></tr>`).join('');
+  L.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{FILES.splice(+b.dataset.x,1);pinta()});
+  /* dos extracciones del mismo tipster y del mismo tramo se duplicarían: el corte
+     de build.py lo resuelve por fecha, pero conviene avisar */
+  const q=FILES.filter(f=>f.t==='quanty').length, p=FILES.filter(f=>f.t==='pp').length;
+  if(q&&p)msg('f-msg','m-w','Hay extracciones de <b>PremiumPay y de Quanty</b> a la vez. '
+    +'El corte por fechas de <code>build.py</code> decide cuál manda en cada tramo, así que no se duplicarán '
+    +'las entradas. Revisa igualmente las líneas de <code>corte</code> en la salida.');
+  else clr('f-msg');
+  sync();
+}
+function sync(){
+  const x=FILES.some(f=>f.t==='meta'), j=FILES.some(f=>f.t==='pp'||f.t==='quanty');
+  $('go').disabled=!(x&&j);
+  $('go-hint').textContent=x&&j?'':(!x&&!j?'Añade al menos un .xlsx y un .json':(!x?'Falta el .xlsx de Meta':'Falta el .json de entradas'));
+}
+$('drop').onclick=()=>$('file').click();
+$('file').onchange=e=>{const fs=[...e.target.files];e.target.value='';addFiles(fs)};
+['dragenter','dragover'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.add('over')}));
+['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.remove('over')}));
+$('drop').addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
+
+/* ═══════════ 2 · generar ═══════════ */
+/* build.py NO vive dentro de este archivo: se carga de al lado. Así hay una sola
+   versión del pipeline, la misma que corres en local, y se toca sin abrir el HTML. */
+let PY=null,DATA=null,TXT='';
+const WHEEL_OPENPYXL='';   // vacío = se baja de PyPI
+const RUNNER=`
+import os, sys, io, json, traceback, shutil
+os.chdir('/work')
+if os.path.isdir('/work/entrada'): shutil.rmtree('/work/entrada')
+os.makedirs('/work/entrada', exist_ok=True)
+for _n, _b in ENTRADA.items():
+    with open('/work/entrada/' + _n, 'wb') as _f: _f.write(bytes(_b))
+if os.path.exists('/work/data.json'): os.remove('/work/data.json')
+_buf = io.StringIO(); _old = sys.stdout; sys.stdout = _buf
+sys.argv = ['build.py', '--fx', str(FX)]
+_ok, _err = True, ''
+try:
+    exec(compile(BUILD_SRC, 'build.py', 'exec'), {'__name__': '__main__'})
+except SystemExit as e:
+    _ok, _err = False, str(e)
+except Exception:
+    _ok, _err = False, traceback.format_exc()
+finally:
+    sys.stdout = _old
+_out = _buf.getvalue()
+_dat = ''
+if _ok and os.path.exists('/work/data.json'):
+    with open('/work/data.json', encoding='utf-8') as _f: _dat = _f.read()
+elif _ok:
+    _ok, _err = False, 'El script terminó sin errores pero no escribió data.json.'
+json.dumps({'ok': _ok, 'err': _err, 'log': _out, 'data': _dat})
+`;
+async function arranca(){
+  if(PY)return PY;
+  msg('g-msg','m-w','<span class="spin"></span>Descargando Python y las librerías… (solo la primera vez)');
+  PY=await loadPyodide();
+  await PY.loadPackage(['pandas','numpy','micropip']);
+  /* openpyxl NO viene en Pyodide y pandas lo necesita para abrir un .xlsx.
+     Es un paquete Python puro, así que micropip lo baja de PyPI y funciona igual. */
+  try{
+    const mp=PY.pyimport('micropip');
+    await mp.install(WHEEL_OPENPYXL||'openpyxl');
+  }catch(e){
+    throw new Error('No se ha podido instalar openpyxl, que es lo que abre los Excel. '
+      +'Suele ser que la red bloquee pypi.org o files.pythonhosted.org. Detalle: '+e.message);
+  }
+  PY.FS.mkdirTree('/work');
+  return PY;
+}
+async function fuente(){
+  const r=await fetch('build.py?'+Date.now());
+  if(!r.ok)throw new Error('No encuentro build.py junto a esta página (HTTP '+r.status
+    +'). Súbelo a la misma carpeta que este archivo.');
+  return await r.text();
+}
+$('go').onclick=async()=>{
+  $('go').disabled=true;$('res').classList.add('hide');$('pub').classList.add('hide');
+  try{
+    const py=await arranca();
+    msg('g-msg','m-w','<span class="spin"></span>Ejecutando build.py…');
+    const src=await fuente();
+    const ent={};for(const f of FILES)if(f.t!=='?')ent[f.name.replace(/[^\w.\-]/g,'_')]=new Uint8Array(f.buf);
+    py.globals.set('BUILD_SRC',src);
+    py.globals.set('FX',parseFloat($('fx').value)||0.8673);
+    py.globals.set('ENTRADA',py.toPy(ent));
+    const res=JSON.parse(await py.runPythonAsync(RUNNER));
+    $('log').textContent=(res.log||'')+(res.err?'\n\n--- ERROR ---\n'+res.err:'');
+    if(!res.ok){
+      $('res').classList.remove('hide');$('kpis').innerHTML='';$('checks').innerHTML='';
+      msg('g-msg','m-bad','<b>build.py se ha parado.</b> Mira la salida completa abajo: '
+        +esc((res.err||'').split('\n').filter(Boolean).pop()||'sin detalle'));
+      return;
+    }
+    TXT=res.data;DATA=JSON.parse(TXT);
+    clr('g-msg');resultado();
+  }catch(e){
+    msg('g-msg','m-bad','<b>No se ha podido generar.</b> '+esc(e.message));
+  }finally{$('go').disabled=false}
+};
+
+/* ═══════════ 3 · resultado ═══════════ */
+function resultado(){
+  const d=DATA,c=d.cuadre||{},t=d.totales||{};
+  $('res').classList.remove('hide');$('pub').classList.remove('hide');
+  $('kpis').innerHTML=[
+    ['Periodo',(d.rango||['—','—']).join(' → ')],
+    ['Entradas',nf(c.entradas)],
+    ['Pagos',nf(c.pagos)],
+    ['Ingresos',ef(c.ingresos)],
+    ['Inversión total',ef(t.gasto_total_eur)],
+    ['Atribuible',(t.pct_atribuible!=null?t.pct_atribuible+' %':'—')],
+  ].map(([l,v])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${esc(v)}</div></div>`).join('');
+
+  const K=[],log=$('log').textContent;
+  const add=(st,tit,det)=>K.push({st,tit,det});
+  /* tipsters: un nombre con espacios o interrogante casi siempre es un enlace mal nombrado */
+  const nom=Object.entries(d.nombres||{});
+  const raros=nom.filter(([p])=>p==='?'||/\s/.test(p));
+  add(raros.length?'warn':'ok',`${nom.length} tipsters detectados`,
+    esc(nom.map(([p,n])=>n).join(' · '))+(raros.length?
+      `<br><b>Revisa estos:</b> ${esc(raros.map(([p])=>p).join(', '))}`:''));
+  /* plataforma */
+  const pl=[...new Set((d.placement||[]).map(r=>r.placement))];
+  const sep=pl.includes('FB Feed')&&pl.includes('IG Feed');
+  add(sep?'ok':'warn','Facebook e Instagram separados',
+    sep?'Salen <code>FB Feed</code> e <code>IG Feed</code> como ubicaciones distintas.'
+       :'No aparecen separados. Reexporta desde Meta con el desglose <b>Platform</b> o la pestaña Ubicaciones no sirve.');
+  /* moneda */
+  const mon=d.monedas||[];
+  add('ok','Monedas del export',mon.join(' · ')+(mon.includes('USD')?
+    ` · el tipo de cambio ${d.fx} solo se aplica a las filas en dólares.`:' · sin conversión, todo nativo.'));
+  /* colisiones */
+  add((d.colisiones||0)===0?'ok':'bad','Colisiones de conjunto',
+    (d.colisiones||0)===0?'Ninguna: cada conjunto pertenece a un solo tipster.'
+      :`<b>${d.colisiones}</b> conjuntos comparten clave entre tipsters. No publiques hasta revisarlo.`);
+  /* cruce por id */
+  if(d.tiene_adset_id)add('ok','Cruce por ID de conjunto',
+    `${nf(d.cruce_por_id)} entradas emparejadas por <code>meta_adset_id</code>, sin depender del nombre.`);
+  else add('warn','Cruce por ID de conjunto',
+    'El export de Meta no trae la columna <b>Ad set ID</b>. Se cruza por nombre, que es lo que falla cuando alguien renombra un conjunto.');
+  /* creatividad */
+  if(d.tiene_plantilla)add(d.tiene_gasto_creativo?'ok':'warn','Creatividad',
+    d.tiene_gasto_creativo?'Con inversión por plantilla: la pestaña Creatividad trae CPL y ROAS.'
+      :'Hay plantillas, pero sin la columna <b>Ad ID</b> en Meta no se puede repartir el gasto: no habrá CPL por plantilla.');
+  /* estado */
+  add(d.tiene_estado?'ok':'warn','Estado de los conjuntos',
+    d.tiene_estado?'El export trae el estado de entrega de Meta.'
+      :'Sin columna de estado. El panel deducirá qué está activo por la inversión reciente, que va un día por detrás.');
+  /* avisos */
+  const av=d.avisos||[],porTipo={};av.forEach(a=>porTipo[a.tipo]=(porTipo[a.tipo]||0)+1);
+  add(av.length>40?'warn':'ok',`${av.length} avisos de emparejamiento`,
+    Object.entries(porTipo).map(([k,v])=>`${esc(k)}: <b>${v}</b>`).join('<br>')
+    +'<br><span class="mini">Cada aviso es gasto o entradas sin atribuir. Es trabajo de nomenclatura, no un fallo del script.</span>');
+  /* avisos duros del propio script */
+  const duros=log.split('\n').filter(l=>l.startsWith('AVISO'));
+  if(duros.length)add('warn','Avisos del script',duros.map(esc).join('<br>'));
+  /* pagos a cero */
+  if((c.entradas||0)>50&&(c.pagos||0)===0)add('warn','Ningún pago en el periodo',
+    'Hay entradas pero cero pagos. Si alguna fuente no rellena <code>pagos_num</code> por suscriptor, '
+    +'el ROAS y los ingresos saldrán a cero en todo el panel.');
+
+  $('checks').innerHTML=K.map(k=>`<div class="chk ${k.st}"><div class="i">${
+    k.st==='ok'?'✓':(k.st==='warn'?'!':'✕')}</div><div><b>${esc(k.tit)}</b><small>${k.det}</small></div></div>`).join('');
+  const bloquea=K.some(k=>k.st==='bad');
+  $('push').disabled=bloquea||!ghListo();
+  if(bloquea)msg('p-msg','m-bad','Hay un problema bloqueante arriba. Arréglalo antes de publicar.');
+  else clr('p-msg');
+}
+
+/* ═══════════ 4 · publicar ═══════════ */
+const GH=['gh-own','gh-rep','gh-pth','gh-brc'];
+const DEF={'gh-own':'asecas-tipszum','gh-rep':'tipszum-dashboard','gh-pth':'public/data.json','gh-brc':'main'};
+function ghCarga(){
+  GH.forEach(k=>$(k).value=localStorage.getItem('tz_'+k)||DEF[k]);
+  $('gh-tok').value=localStorage.getItem('tz_gh_tok')||'';
+  $('gh-est').textContent=localStorage.getItem('tz_gh_tok')?'Token guardado en este navegador':'Sin token: solo podrás descargar';
+}
+const ghListo=()=>GH.every(k=>$(k).value.trim())&&$('gh-tok').value.trim();
+$('gh-save').onclick=()=>{
+  GH.forEach(k=>localStorage.setItem('tz_'+k,$(k).value.trim()));
+  localStorage.setItem('tz_gh_tok',$('gh-tok').value.trim());
+  ghCarga();$('push').disabled=!DATA||!ghListo();
+  msg('p-msg','m-ok','Guardado. No hace falta volver a pegarlo en este navegador.');
+};
+$('gh-clear').onclick=()=>{localStorage.removeItem('tz_gh_tok');$('gh-tok').value='';ghCarga();
+  $('push').disabled=true;msg('p-msg','m-w','Token borrado de este navegador.')};
+try{ghCarga()}catch(e){$('gh-est').textContent='Este navegador no deja guardar nada (¿modo incógnito?)'}
+
+$('dl').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([TXT],{type:'application/json'}));
+  a.download='data.json';document.body.appendChild(a);a.click();a.remove();
+};
+/* btoa no acepta UTF-8 directo: hay que pasar por bytes o revienta con las tildes */
+function b64(str){
+  const b=new TextEncoder().encode(str);let s='';const N=0x8000;
+  for(let i=0;i<b.length;i+=N)s+=String.fromCharCode.apply(null,b.subarray(i,i+N));
+  return btoa(s);
+}
+$('push').onclick=async()=>{
+  const own=$('gh-own').value.trim(),rep=$('gh-rep').value.trim(),
+        pth=$('gh-pth').value.trim().replace(/^\/+/,''),brc=$('gh-brc').value.trim(),tok=$('gh-tok').value.trim();
+  $('push').disabled=true;
+  msg('p-msg','m-w','<span class="spin"></span>Publicando en GitHub…');
+  const H={'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  const url=`https://api.github.com/repos/${own}/${rep}/contents/${pth}`;
+  try{
+    /* GitHub exige el sha del archivo que reemplazas: así falla en vez de pisar
+       a ciegas un cambio que haya subido otra persona mientras tanto. */
+    let sha=null;
+    const g=await fetch(`${url}?ref=${encodeURIComponent(brc)}`,{headers:H});
+    if(g.ok)sha=(await g.json()).sha;
+    else if(g.status===404)sha=null;
+    else if(g.status===401||g.status===403)throw new Error('El token no vale para este repositorio (HTTP '+g.status
+      +'). Comprueba que sea fine-grained, apunte a <code>'+esc(own+'/'+rep)+'</code> y tenga <b>Contents: Read and write</b>.');
+    else throw new Error('GitHub ha respondido '+g.status+' al leer el archivo.');
+    const cuerpo={message:`data.json · ${DATA.rango?DATA.rango.join(' → '):''} · ${nf((DATA.cuadre||{}).entradas)} entradas`,
+      content:b64(TXT),branch:brc};
+    if(sha)cuerpo.sha=sha;
+    const p=await fetch(url,{method:'PUT',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify(cuerpo)});
+    if(!p.ok){
+      const j=await p.json().catch(()=>({}));
+      if(p.status===409)throw new Error('Alguien ha subido otro <code>data.json</code> mientras generabas este. '
+        +'Vuelve a pulsar Publicar para reintentar sobre la versión nueva.');
+      throw new Error('GitHub ha respondido '+p.status+': '+esc(j.message||'sin detalle'));
+    }
+    const j=await p.json();
+    msg('p-msg','m-ok','<b>Publicado.</b> Cloudflare lo despliega en menos de un minuto. '
+      +`<a href="${esc((j.commit||{}).html_url||'#')}" target="_blank" rel="noopener">Ver el commit</a> · `
+      +'<a href="index.html">Abrir el panel</a> (en ventana de incógnito si ves datos viejos).');
+  }catch(e){
+    const red=/failed to fetch|networkerror|load failed/i.test(e.message);
+    msg('p-msg','m-bad','<b>No se ha publicado.</b> '
+      +(red?'No se ha podido contactar con GitHub. Comprueba tu conexión, y que ninguna VPN o extensión esté bloqueando <code>api.github.com</code>.':e.message)
+      +'<br><span class="mini">El data.json sigue generado: puedes descargarlo con el botón de al lado y subirlo a mano.</span>');
+  }finally{$('push').disabled=!DATA||!ghListo()}
+};
+</script>
+</body>
+</html>

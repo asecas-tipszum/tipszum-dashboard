@@ -380,6 +380,28 @@ tbody tr.lowdata td{background:#fffdf5}
 </div>
 
 <!-- ============ AJUSTES ============ -->
+<!-- ============ CREATIVIDAD ============ -->
+<div class="pane" id="pcre">
+  <div id="cre-aviso"></div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#d81b60">✦</div>
+      <div><h3>Creatividad</h3><small>Qué plantilla, audiencia o segmentación trae entradas que además pagan</small></div></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div><div class="mini" style="margin-bottom:4px">Ver por</div><div class="pills" id="cre-dim"></div></div>
+        <input class="srch" id="cre-q" placeholder="Filtrar…"></div></div>
+    <div class="tw"><table id="t-cre"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <div class="note" id="cre-note"></div>
+    <div class="pills" style="margin-top:10px">
+      <button class="pill" id="cre-cop">Copiar tabla</button>
+      <button class="pill" id="cre-csv">Descargar CSV</button></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#3d63b0">▮</div>
+      <div><h3>Reparto de entradas</h3><small id="cre-sub"></small></div></div></div>
+    <div style="height:320px"><canvas id="c-cre"></canvas></div>
+  </div>
+</div>
+
 <div class="pane" id="p5">
   <div class="card">
     <div class="chead"><div class="ctitle"><div class="cicon" style="background:#28477f">⚙</div>
@@ -427,7 +449,7 @@ tbody tr.lowdata td{background:#fffdf5}
 <script>
 /* ═══════════════════ ESTADO GLOBAL ═══════════════════ */
 let DATA=null,CFG=null,LOG=[];
-let D,PLAC,RET,AVI,OTROS,OTD,SIN,NOM,CU,MG,TOT,D_MIN,D_MAX,FX,TIPS;
+let D,PLAC,RET,AVI,OTROS,OTD,CRE,SIN,NOM,CU,MG,TOT,D_MIN,D_MAX,FX,TIPS;
 let PEND=[],PENDF='',PG={},PT={},HAYPEND=false;   // cola de aprobación de PremiumPay
 let BUDMES='';
 const PAL=['#3d63b0','#22b573','#f5a623','#c8353a','#7e57c2','#00acc1','#8d6e63','#546e7a','#d81b60','#43a047','#5e35b1','#00897b','#6d4c41','#ad1457','#1565c0'];
@@ -437,7 +459,8 @@ let ST={from:'',to:'',preset:'all',tip:'',pais:'',conj:'',est:'all',who:''};
 let SORT={liga:'gasto',conj:'gasto',addia:'dia'},DIR={liga:-1,conj:-1,addia:1};
 let TAB=0,HOYF='',CMG='tipster',CMP='rango',CMS='';
 let CM={modo:'tipster',sel:[],q:'',met:'cpl',mm:7};   // comparador
-let FUNG='tipster',FUNQ='',PLACV='ubi';                            // embudo por linea
+let FUNG='tipster',FUNQ='',PLACV='ubi';
+let CRED='plantilla',CREQ='';                                      // pestaña Creatividad                            // embudo por linea
 let CONJQ='',CONJF='';                                 // buscador y filtros de la tabla de conjuntos
 let DIRTY=false;                                       // hay cambios de configuracion sin guardar
 let MAPAQ=null;                                        // medianas de los cuadrantes del mapa
@@ -455,8 +478,8 @@ const CFG_DEF={version:1,kpi_principal:'cpl',
 /* ═══════════════════ FORMATO ═══════════════════ */
 const nf=n=>(n||0).toLocaleString('es-ES',{maximumFractionDigits:0});
 const ef=n=>(isFinite(n)&&n!==null?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
-const pf=n=>(isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' %';
-const xf=n=>(isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'×';
+const pf=n=>(n!=null&&isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' %';
+const xf=n=>(n!=null&&isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'×';
 const dv=(a,b)=>b?a/b:null;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function heat(v,mx,rgb){const a=mx>0?Math.min(1,Math.max(0,v/mx)):0;return a<.02?'':'background:rgba('+rgb+','+(0.08+a*0.7).toFixed(3)+')'}
@@ -480,7 +503,7 @@ async function loadJSON(url,opt){
 function bind(){
   D=DATA.daily;PLAC=DATA.placement||[];RET=DATA.retencion||[];AVI=DATA.avisos||[];OTROS=DATA.otros||[];
   SIN=DATA.sin_conjunto||'Genérico (sin conjunto)';NOM=DATA.nombres||{};CU=DATA.cuadre||{};
-  MG=DATA.meta_grupo||{};TOT=DATA.totales||null;OTD=DATA.otros_daily||[];
+  MG=DATA.meta_grupo||{};TOT=DATA.totales||null;OTD=DATA.otros_daily||[];CRE=DATA.creativos||[];
   D_MIN=DATA.rango[0];D_MAX=DATA.rango[1];FX=DATA.fx;
   /* Cola de aprobación. Ojo: `solicitudes` y `entradas_vida` son totales DE POR VIDA del
      enlace, no del periodo filtrado. Por eso los pendientes no entran nunca en `daily`
@@ -1285,6 +1308,90 @@ function embudoLinea(){
   const tot=met(sum(rows));
   T.querySelector('tfoot').innerHTML='<tr>'+cols.map(c=>c[0]==='k'?`<td>TOTAL (${L.length})</td>`:`<td>${FM(c[0],tot[c[0]])}</td>`).join('')+'</tr>';
 }
+/* ═══════════════════ CREATIVIDAD ═══════════════════ */
+/* Quanty declara con qué plantilla creativa, audiencia y segmentación se hizo el
+   anuncio que trajo a cada suscriptor. Eso permite juzgar el creativo por
+   ENTRADAS REALES y por quién paga, no por clics.
+   El gasto es el punto delicado: la plantilla es del anuncio, no del conjunto, y
+   el export de Meta a nivel de conjunto no se puede repartir entre plantillas sin
+   inventar. Por eso el CPL sólo aparece si el export trae la columna «Ad ID».  */
+const CRE_DIMS=[['plantilla','Plantilla'],['audiencia','Audiencia'],['segmentacion','Segmentación'],['pais','País']];
+function creatividad(){
+  const av=document.getElementById('cre-aviso'),T=document.getElementById('t-cre');
+  if(!DATA.tiene_plantilla){
+    av.innerHTML=`<div class="warnbox"><h3>Este <code>data.json</code> no trae datos de creatividad</h3>
+      <p>La plantilla, la audiencia y la segmentación las declara Quanty en su export. Los canales que siguen
+      en PremiumPay no las tienen, así que esta pestaña se queda vacía hasta que el tipster migre.</p></div>`;
+    T.querySelector('thead').innerHTML='';T.querySelector('tbody').innerHTML='';T.querySelector('tfoot').innerHTML='';
+    document.getElementById('cre-note').textContent='';return;
+  }
+  const conGasto=!!DATA.tiene_gasto_creativo;
+  av.innerHTML=conGasto?'':`<div class="warnbox"><h3>Falta la inversión por plantilla</h3>
+    <p>La plantilla es del <b>anuncio</b>, no del conjunto. Sin la columna <b>«Ad ID»</b> en el informe de Meta no hay
+    forma de repartir el gasto entre plantillas, así que aquí no verás CPL ni ROAS. Lo que sí es exacto:
+    entradas, pagadores, ingresos y la conversión a pago. Añade esa columna al informe guardado y aparecen solas.</p></div>`;
+
+  document.getElementById('cre-dim').innerHTML=CRE_DIMS
+    .map(([v,t])=>`<button class="pill${v===CRED?' on':''}" data-cd="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-cd]').forEach(b=>b.onclick=()=>{CRED=b.dataset.cd;render()});
+  const q=document.getElementById('cre-q');q.value=CREQ;
+  q.oninput=()=>{CREQ=q.value;creatividad()};
+
+  const rows=CRE.filter(r=>r.dia>=ST.from&&r.dia<=ST.to
+    &&(!ST.tip||r.tipster===ST.tip)&&(!ST.pais||r.pais===ST.pais));
+  let L=grp(rows,CRED).filter(x=>x.k&&x.k!=='undefined'&&x.k!=='');
+  if(CREQ.trim())L=L.filter(x=>String(x.k).toLowerCase().includes(CREQ.trim().toLowerCase()));
+  L.sort((a,b)=>b.entradas-a.entradas);
+  const bajo=x=>x.entradas<CFG.umbral.entradas_min;
+
+  const cols=[['k',CRE_DIMS.find(d=>d[0]===CRED)[1]]]
+    .concat(conGasto?[['gasto','Inversión'],['entradas','Entradas'],['cpl','CPL']]:[['entradas','Entradas']])
+    .concat([['pagadores','Pagadores'],['tasa','Entrada→Pago'],['ingresos','Ingresos'],['ing_ent','Ingreso/entrada']])
+    .concat(conGasto?[['roas','ROAS']]:[]);
+  T.querySelector('thead').innerHTML='<tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>';
+  const FM=(c,v)=>{
+    if(['gasto','cpl','ingresos','ing_ent'].includes(c))return v===null||!isFinite(v)?'—':ef(v);
+    if(c==='tasa')return v===null?'—':pf(v);
+    if(c==='roas')return v===null||!isFinite(v)?'—':xf(v);
+    return nf(v)};
+  /* mejor y peor sólo entre líneas con muestra: con 3 entradas un CPL no dice nada */
+  const conMuestra=L.filter(x=>!bajo(x));
+  const mejorCPL=conGasto?Math.min(...conMuestra.filter(x=>x.cpl!==null&&isFinite(x.cpl)).map(x=>x.cpl)):null;
+  const peorCPL =conGasto?Math.max(...conMuestra.filter(x=>x.cpl!==null&&isFinite(x.cpl)).map(x=>x.cpl)):null;
+  T.querySelector('tbody').innerHTML=L.map(d=>'<tr class="'+(bajo(d)?'lowdata':'')+'">'+cols.map(c=>{
+    if(c[0]==='k')return `<td class="nm">${esc(d.k)}${bajo(d)?' <span class="chip ch-dor">muestra baja</span>':''}</td>`;
+    const v=FM(c[0],d[c[0]]);
+    if(c[0]==='cpl'&&!bajo(d)&&d.cpl!==null&&isFinite(d.cpl)){
+      if(d.cpl===mejorCPL&&L.length>1)return `<td class="best">${v}</td>`;
+      if(d.cpl===peorCPL&&L.length>1)return `<td class="worst">${v}</td>`;
+    }
+    return `<td>${v}</td>`}).join('')+'</tr>').join('')
+    ||'<tr><td colspan="'+cols.length+'" style="text-align:center;font-weight:400;color:#6b7a90">Nada que mostrar con este filtro.</td></tr>';
+  const tot=met(sum(rows));
+  T.querySelector('tfoot').innerHTML='<tr>'+cols.map(c=>c[0]==='k'?`<td>TOTAL (${L.length})</td>`:`<td>${FM(c[0],tot[c[0]])}</td>`).join('')+'</tr>';
+
+  const nom=CRE_DIMS.find(d=>d[0]===CRED)[1].toLowerCase();
+  document.getElementById('cre-note').innerHTML=
+    `Sólo cuentan los canales que ya están en Quanty: el resto no declara ${esc(nom)}. `
+    +`Una línea con menos de ${CFG.umbral.entradas_min} entradas sale como <span class="chip ch-dor">muestra baja</span> y no entra en el mejor ni en el peor. `
+    +(conGasto?'':'<b>Sin la columna «Ad ID» en Meta no hay inversión aquí</b>, así que ordena por entradas y por conversión a pago, que sí son exactas.');
+
+  const top=L.slice(0,12);
+  document.getElementById('cre-sub').textContent=top.length?`Por ${nom}, de más a menos entradas`:'';
+  draw('c-cre','bar',{labels:top.map(x=>x.k),datasets:[
+      {label:'Entradas',data:top.map(x=>x.entradas),backgroundColor:'#3d63b0'},
+      {label:'Pagadores',data:top.map(x=>x.pagadores),backgroundColor:'#188a55'}]},
+    {indexAxis:'y',plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}},
+     scales:{x:{beginAtZero:true,ticks:{font:{size:11}}},y:{ticks:{font:{size:11}}}}});
+
+  const cab=cols.map(c=>c[1]), filas=L.map(d=>cols.map(c=>c[0]==='k'?d.k:FM(c[0],d[c[0]])));
+  const tsv=[cab.join('\t')].concat(filas.map(f=>f.join('\t'))).join('\n');
+  document.getElementById('cre-cop').onclick=e=>{navigator.clipboard.writeText(tsv)
+    .then(()=>{e.target.textContent='Copiado';setTimeout(()=>e.target.textContent='Copiar tabla',1400)})};
+  document.getElementById('cre-csv').onclick=()=>dl(`creatividad_${CRED}_${ST.from}_${ST.to}.csv`,
+    '\ufeff'+[cab.join(';')].concat(filas.map(f=>f.join(';'))).join('\n'),'text/csv;charset=utf-8');
+}
+
 /* Meta manda la ubicación (Feed, Reels, Stories…) y la plataforma (Facebook, Instagram)
    como dos desgloses distintos. Si el export sólo trae el de ubicación, «Feed» viene sumado
    entre Facebook e Instagram y no hay forma de separarlo aquí: hay que añadir el desglose
@@ -1891,6 +1998,7 @@ function render(){
   const m=met(sum(rows));
   frescura();cambios(rows,prev);acciones(C);diagnostico(C);historial();presupuesto();
   kpis(rows,prev);tablaConj(C,rows);liga(rows);mapa(C);retencion();diario(rows);
+  creatividad();
   ficha();
   embudo(m);comparar(C);placement();alerts();cierre();ajustes(C);
   const tt=TOT?` · inversión total ${ef(TOT.gasto_total_eur)}, atribuible ${ef(TOT.gasto_atribuible_eur)} (${TOT.pct_atribuible}%)`
@@ -1901,7 +2009,7 @@ function render(){
 }
 
 /* ═══════════════════ CONTROLES ═══════════════════ */
-const TABS=['Qué hacer hoy','Rendimiento','Conjunto','Comparar','Presupuesto','Embudo','Cierre','Ajustes'];
+const TABS=['Qué hacer hoy','Rendimiento','Conjunto','Comparar','Presupuesto','Embudo','Cierre','Creatividad','Ajustes'];
 function setTab(i){TAB=i;
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',j===i));
   document.querySelectorAll('.pane').forEach((p,j)=>p.classList.toggle('on',j===i));

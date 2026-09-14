@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de decisión · Meta × PremiumPay</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--navy:#1e3a6e;--thead:#3d63b0;--total:#28477f;--ink:#1f2937;--ink2:#6b7a90;
+--line:#e8edf5;--acc:#3d63b0;--ok:#188a55;--amber:#c78200;--red:#c8353a;--r:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1580px;margin:0 auto;padding:18px}
+header.top{background:var(--navy);color:#fff;border-radius:var(--r);padding:18px 22px;margin-bottom:14px}
+header.top h1{font-size:19px;font-weight:650;letter-spacing:-.2px}
+header.top p{font-size:12.5px;color:#a8bcdc;margin-top:4px}
+.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:16px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:#93a9cd;font-weight:600}
+.fg select,.fg input{padding:7px 9px;border:1px solid rgba(255,255,255,.18);border-radius:7px;background:rgba(255,255,255,.1);color:#fff;font-size:13px;min-width:110px;font-family:inherit}
+.fg select option{background:var(--navy)}
+.fg select.wide{min-width:230px;max-width:290px}
+.fx{background:rgba(255,255,255,.14);border-radius:9px;padding:9px 13px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.fx b{font-size:12px;color:#fff}.fx small{font-size:11px;color:#a8bcdc}
+.fx input{width:88px;text-align:right;font-weight:700}
+button.rst{padding:8px 14px;border:0;border-radius:7px;background:#5b83d6;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.rng{display:flex;gap:5px;flex-wrap:wrap}
+.rng button{padding:7px 11px;border:1px solid rgba(255,255,255,.2);border-radius:7px;background:transparent;color:#c5d5f0;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.rng button.on{background:#5b83d6;border-color:#5b83d6;color:#fff}
+.tabs{display:flex;gap:6px;margin-bottom:14px;background:#fff;padding:6px;border-radius:12px;box-shadow:0 1px 3px rgba(20,40,80,.07);width:fit-content;flex-wrap:wrap}
+.tab{padding:9px 18px;border:0;border-radius:8px;background:transparent;font-size:13.5px;font-weight:600;color:#6b7a90;cursor:pointer;font-family:inherit}
+.tab.on{background:var(--navy);color:#fff}
+.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #5b83d6;outline-offset:2px}
+.pane{display:none}.pane.on{display:block}
+.card{background:var(--card);border-radius:var(--r);padding:18px 20px 20px;box-shadow:0 1px 3px rgba(20,40,80,.07);margin-bottom:14px}
+.chead{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.ctitle{display:flex;align-items:center;gap:11px}
+.cicon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;flex:0 0 auto}
+.ctitle h3{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.ctitle small{display:block;font-size:11.5px;color:var(--ink2);font-weight:400}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:6px 13px;border:1px solid #d8e0ee;border-radius:8px;background:#fff;font-size:11.5px;color:#5a6b85;cursor:pointer;font-weight:500;white-space:nowrap;font-family:inherit}
+.pill.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:11px;margin-bottom:14px}
+.kpi{background:#fff;border-radius:12px;padding:13px 15px;box-shadow:0 1px 3px rgba(20,40,80,.07)}
+.kpi .lb{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink2);font-weight:700}
+.kpi .vl{font-size:21px;font-weight:750;letter-spacing:-.5px;margin-top:5px}
+.kpi .dl{font-size:11.5px;margin-top:3px;font-weight:600}
+.up{color:var(--ok)}.dn{color:var(--red)}.fl{color:var(--ink2)}
+/* acciones */
+.tier{margin-bottom:8px}
+.tier h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;padding:9px 0 5px;color:var(--ink2)}
+.act{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid #eef2f8;align-items:flex-start}
+.act:last-child{border-bottom:0}
+.badge{flex:0 0 auto;padding:5px 11px;border-radius:7px;font-size:10.5px;font-weight:800;letter-spacing:.3px;color:#fff;min-width:104px;text-align:center}
+.b-esc{background:#188a55}.b-pau{background:#c8353a}.b-inv{background:#c78200}.b-opt{background:#3d63b0}.b-dat{background:#8fa0ba}
+.act-b{flex:1;min-width:0}
+.act-b h4{font-size:14px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.act-b .ev{font-size:12.5px;color:var(--ink2);line-height:1.6}
+.act-b .ev b{color:var(--ink)}
+.act-r{flex:0 0 auto;text-align:right;font-size:11px;color:var(--ink2);min-width:150px}
+.act-r .cv{display:block;font-weight:800;font-size:12.5px}
+.c-alta{color:#188a55}.c-media{color:#c78200}.c-baja{color:#c8353a}
+.btns{display:flex;gap:5px;justify-content:flex-end;margin-top:7px;flex-wrap:wrap}
+.btns button{padding:4px 9px;border:1px solid #d8e0ee;border-radius:6px;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#5a6b85;font-weight:600}
+.btns button:hover{background:#f2f6fd;border-color:#b9c9e6}
+.btns button.done{background:#e2f7ec;border-color:#a9e0c5;color:#0f6b41}
+.chip{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
+.ch-act{background:#e2f7ec;color:#0f6b41}.ch-pau{background:#f6e4e5;color:#8e2226}
+.ch-tst{background:#e6efff;color:#2b4d94}.ch-dor{background:#eef1f6;color:#6b7a90}.ch-arc{background:#eceaf5;color:#5b4b8a}
+.ch-nod{background:#fdf0dc;color:#8a5a00}
+.link{color:var(--acc);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+details.fold{margin-top:10px}
+details.fold summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--ink2);padding:7px 0;list-style:none}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary:before{content:'▸ ';color:var(--acc)}
+details.fold[open] summary:before{content:'▾ '}
+.tw{overflow-x:auto;border-radius:9px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}
+thead th{background:var(--thead);color:#fff;font-weight:600;font-size:11.5px;padding:11px 9px;text-align:right;white-space:nowrap;cursor:pointer;user-select:none}
+thead th:first-child{text-align:left;border-radius:9px 0 0 0;padding-left:14px}
+thead th:last-child{border-radius:0 9px 0 0}
+tbody td{padding:9px;text-align:right;white-space:nowrap;border-bottom:1px solid #eef2f8}
+tbody td:first-child{text-align:left;font-weight:600;padding-left:14px;color:#2a3a52}
+tbody tr:nth-child(even) td{background:#fbfcfe}
+tbody tr:hover td{background:#f2f6fd}
+tbody tr.sin td{background:#fffaf0!important;font-style:italic}
+tbody tr.off td{opacity:.55}
+td.nm{max-width:300px;white-space:normal;font-weight:600;line-height:1.3;font-size:11.5px}
+tfoot td{background:var(--total);color:#fff;font-weight:700;padding:12px 9px;text-align:right;white-space:nowrap}
+tfoot td:first-child{text-align:left;padding-left:14px;border-radius:0 0 0 9px}
+tfoot td:last-child{border-radius:0 0 9px 0}
+.heat{display:inline-block;padding:3px 7px;border-radius:5px;min-width:46px;text-align:right}
+.pos{color:#188a55;font-weight:700}.neg{color:#c8353a;font-weight:700}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;flex:0 0 auto}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+canvas{max-height:290px}
+.note{font-size:11.5px;color:var(--ink2);margin-top:10px;line-height:1.55}
+.tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:#e6efff;color:#3d63b0;margin-left:5px}
+.alerts{background:#fffaf0;border:1px solid #f3ddaa;border-radius:var(--r);padding:16px 19px;margin-bottom:14px}
+.alerts h3{font-size:13.5px;color:#8a5a00;margin-bottom:9px}
+.alerts ul{margin-left:17px;font-size:12.5px;line-height:1.7;color:#5c4a20}
+.alerts code{background:#f3ead6;padding:1px 5px;border-radius:3px;font-size:11px}
+.warnbox{background:#fff;border-left:4px solid var(--amber);border-radius:9px;padding:13px 17px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,40,80,.07)}
+.warnbox h3{font-size:13px;margin-bottom:6px;color:#8a5a00}
+.warnbox p{font-size:12.5px;line-height:1.65;color:#5a6b85}
+.bad{border-left-color:var(--red)}.bad h3{color:#8e2226}
+.sc{width:100%;font-size:12.5px}
+.sc th{background:var(--thead);color:#fff;padding:9px;font-size:11px;text-align:right}
+.sc th:first-child{text-align:left}
+.sc td{padding:8px 9px;text-align:right;border-bottom:1px solid #eef2f8}
+.sc td:first-child{text-align:left;font-weight:600}
+.cfgt input,.cfgt select{padding:5px 7px;border:1px solid #d8e0ee;border-radius:6px;font-size:12px;font-family:inherit;width:100px;text-align:right}
+.cfgt input.txt{text-align:left;width:100%}
+.ok-msg{font-size:12px;color:var(--ok);font-weight:600;margin-left:8px}
+.mini{font-size:11px;color:var(--ink2)}
+footer{text-align:center;font-size:11.5px;color:var(--ink2);padding:18px 0 8px}
+.crumb{font-size:12px;color:var(--ink2);margin-bottom:10px}
+.crumb b{color:var(--ink)}
+.empty{padding:26px 10px;text-align:center;color:var(--ink2);font-size:13px}
+.empty b{display:block;color:var(--ink);font-size:14px;margin-bottom:4px}
+/* embudo visual */
+.fun{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:2px 0 12px}
+.fun .st{flex:1 1 118px;background:#f7f9fd;border:1px solid #e8edf5;border-radius:10px;padding:11px 12px;min-width:118px}
+.fun .st .lb{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);font-weight:700}
+.fun .st .vl{font-size:19px;font-weight:750;letter-spacing:-.4px;margin-top:3px}
+.fun .st .sub{font-size:10.5px;color:var(--ink2);margin-top:2px}
+.fun .ar{flex:0 0 84px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;color:var(--acc);padding:0 4px;text-align:center}
+.fun .ar small{display:block;font-size:9px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.fun .ar.worst{color:var(--red)}
+.fun .st.worst{border-color:#e8b9bb;background:#fdf3f3}
+/* comparador */
+.cmp-sel{display:flex;flex-wrap:wrap;gap:6px;max-height:172px;overflow:auto;padding:3px 2px}
+.srch{padding:7px 10px;border:1px solid #d8e0ee;border-radius:8px;font-size:12.5px;font-family:inherit;min-width:190px;color:var(--ink)}
+td.best{background:#e7f7ee!important;color:#0f6b41;font-weight:750}
+td.worst{background:#fdeced!important;color:#8e2226;font-weight:750}
+tbody tr.lowdata td{background:#fffdf5}
+.wm{background:#fffaf0;border:1px solid #f3ddaa;border-radius:9px;padding:9px 13px;font-size:12px;color:#7a5a10;margin-bottom:11px;line-height:1.55}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:1100px){.cmp-grid{grid-template-columns:1fr}}
+@media(max-width:820px){.row2{grid-template-columns:1fr}.act{flex-direction:column}.act-r{text-align:left;min-width:0}.btns{justify-content:flex-start}.wrap{padding:11px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Panel de decisión · Meta Ads × PremiumPay</h1>
+  <p id="sub">Cargando…</p>
+  <div class="filters">
+    <div class="fg" style="min-width:100%;max-width:100%"><label>Periodo</label>
+      <div class="rng" id="f-rng"></div></div>
+    <div class="fg"><label>Desde</label><input type="date" id="f-from"></div>
+    <div class="fg"><label>Hasta</label><input type="date" id="f-to"></div>
+    <div class="fg"><label>Tipster</label><select id="f-tip"><option value="">Todos</option></select></div>
+    <div class="fg"><label>País</label><select id="f-pais"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Conjunto</label><select id="f-conj" class="wide"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Estado</label><select id="f-est">
+      <option value="all">Todos</option><option value="act">Solo activos</option><option value="nod">Solo «no entrega»</option><option value="off">Solo parados</option></select></div>
+    <div class="fg"><label>Quién eres</label><select id="f-who"></select></div>
+    <div class="fg"><label>&nbsp;</label><button class="rst" id="f-reset">Restablecer</button></div>
+    <div class="fg"><label>&nbsp;</label><div class="fx">
+      <b>1 USD =</b><input type="number" id="fx" step="0.0001" min="0.1" max="2">
+      <b>EUR</b><small id="fxinfo"></small></div></div>
+  </div>
+</header>
+
+<div class="tabs" id="tabs"></div>
+
+<!-- ============ HOY ============ -->
+<div class="pane on" id="p0">
+  <div id="freshbox"></div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#3d63b0">↺</div>
+      <div><h3>Qué ha cambiado</h3><small id="chg-sub"></small></div></div></div>
+    <div class="kpis" id="chg"></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#c8353a">✓</div>
+      <div><h3>Qué hacer hoy</h3><small>Solo conjuntos que están gastando · cada acción con la evidencia y el objetivo que la sostiene</small></div></div>
+      <div class="pills" id="p-hoy"></div></div>
+    <div id="acciones"></div>
+    <div id="excluidos"></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#7e57c2">⚕</div>
+      <div><h3>Diagnóstico por conjunto</h3><small>Dónde falla cada conjunto: captación, conversión a canal o monetización</small></div></div></div>
+    <div class="tw"><table id="t-diag"><thead></thead><tbody></tbody></table></div>
+    <div class="note">La lógica separa las tres fases del embudo. <b>Captación</b>: CPM o CPC altos, pocos leads por euro. <b>Conversión a canal</b>: buen coste por lead pero pocos entran al Telegram — apunta a la landing, al enlace de invitación o a un desajuste entre lo que promete el anuncio y lo que se encuentran. <b>Monetización</b>: entran muchos pero no pagan — apunta al contenido, la oferta o el precio. Con menos de 10 pagadores la monetización informa, pero no ordena.</div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#546e7a">🗒</div>
+      <div><h3>Decisiones del equipo</h3><small>Quién aceptó, ignoró o pospuso cada recomendación</small></div></div>
+      <div class="pills"><button class="pill" id="log-exp">Descargar historial</button></div></div>
+    <div id="log-res"></div>
+    <div class="tw"><table id="t-log"><thead></thead><tbody></tbody></table></div>
+  </div>
+</div>
+
+<!-- ============ RENDIMIENTO ============ -->
+<div class="pane" id="p1">
+  <div class="kpis" id="kpis"></div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#3d63b0">▦</div>
+      <div><h3>Conjuntos de anuncios</h3><small>Pulsa un conjunto para abrir su ficha diaria</small></div></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input class="srch" id="q-conj" placeholder="Buscar conjunto, tipster o país…">
+        <div class="pills" id="p-conj"></div></div></div>
+    <div class="tw"><table id="t-conj"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#188a55">▤</div>
+      <div><h3>Liga de tipsters</h3><small>Mismas métricas, misma ventana · ordena por la columna que estés decidiendo</small></div></div></div>
+    <div class="tw"><table id="t-liga"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <div class="note" id="liga-note"></div>
+  </div>
+  <div class="row2">
+    <div class="card"><div class="chead"><div class="ctitle"><div class="cicon" style="background:#c78200">◎</div>
+      <div><h3>Mapa de decisión</h3><small>Coste de captar frente a lo que devuelve</small></div></div></div>
+      <canvas id="c-mapa"></canvas>
+      <div class="note" id="mapa-note"></div></div>
+    <div class="card"><div class="chead"><div class="ctitle"><div class="cicon" style="background:#00acc1">↘</div>
+      <div><h3>Retención en el canal</h3><small>Qué porcentaje sigue dentro según los días transcurridos</small></div></div></div>
+      <canvas id="c-ret"></canvas>
+      <div class="note">Es retención de <b>suscriptores</b>, no de pagadores ni de ingresos: PremiumPay sólo expone la fecha de entrada y la de salida. Una cohorte puede aguantar bien aquí y aun así perder a los que pagaban.</div></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#3d63b0">📅</div>
+      <div><h3>Evolución diaria</h3><small>Entradas por tipster y CPL agregado</small></div></div></div>
+    <canvas id="c-dia"></canvas>
+  </div>
+</div>
+
+<!-- ============ CONJUNTO ============ -->
+<div class="pane" id="p2">
+  <div id="ad-empty" class="card"><div class="empty"><b>Elige un conjunto</b>
+    Usa el filtro <b>Conjunto</b> de la cabecera, o pulsa cualquier conjunto en Rendimiento o en Qué hacer hoy.</div></div>
+  <div id="ad-body" style="display:none">
+    <div class="card">
+      <div class="chead"><div class="ctitle"><div class="cicon" style="background:#28477f">▩</div>
+        <div><h3 id="ad-h"></h3><small id="ad-sub"></small></div></div>
+        <div class="pills" id="ad-meta"></div></div>
+      <div class="tw"><table class="sc" id="ad-sc"><thead></thead><tbody></tbody></table></div>
+      <div class="note" id="ad-note"></div>
+    </div>
+    <div class="card">
+      <div class="chead"><div class="ctitle"><div class="cicon" style="background:#3d63b0">📈</div>
+        <div><h3>Evolución diaria del conjunto</h3><small>Inversión y entradas por día, con el CPL objetivo como referencia</small></div></div></div>
+      <canvas id="c-ad"></canvas>
+    </div>
+    <div class="card">
+      <div class="chead"><div class="ctitle"><div class="cicon" style="background:#546e7a">📋</div>
+        <div><h3>Detalle día a día</h3><small>CPL exacto: inversión del día entre entradas reales de ese día</small></div></div></div>
+      <div class="tw"><table id="t-addia"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMPARAR ============ -->
+<div class="pane" id="pcmp">
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#d81b60">⇄</div>
+      <div><h3>Comparar</h3><small>Cruza tipsters, conjuntos o países en la misma ventana de fechas</small></div></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div><div class="mini" style="margin-bottom:4px">Comparar por</div><div class="pills" id="cmp-modo"></div></div>
+      </div></div>
+    <div class="wm" id="cmp-warn"></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:9px">
+      <input class="srch" id="cmp-q" placeholder="Filtrar la lista…">
+      <div class="pills">
+        <button class="pill" id="cmp-top3">Top 3 por inversión</button>
+        <button class="pill" id="cmp-top5">Top 5</button>
+        <button class="pill" id="cmp-none">Vaciar</button>
+      </div>
+      <span class="mini" id="cmp-cnt"></span>
+    </div>
+    <div class="cmp-sel" id="cmp-sel"></div>
+  </div>
+
+  <div class="card" id="cmp-empty" style="display:none"><div class="empty"><b>Elige al menos dos</b>
+    Marca dos o más en la lista de arriba para verlos enfrentados.</div></div>
+
+  <div id="cmp-body">
+    <div class="card">
+      <div class="chead"><div class="ctitle"><div class="cicon" style="background:#28477f">▤</div>
+        <div><h3 id="cmp-h">Cara a cara</h3><small>Verde = mejor de la fila · rojo = peor. Las filas neutras (inversión, volumen) no se colorean</small></div></div>
+        <div class="pills">
+          <button class="pill" id="cmp-copy">Copiar tabla</button>
+          <button class="pill" id="cmp-csv">Descargar CSV</button></div></div>
+      <div class="tw"><table id="t-cmp"><thead></thead><tbody></tbody></table></div>
+      <div class="note" id="cmp-note"></div>
+    </div>
+
+    <div class="card">
+      <div class="chead"><div class="ctitle"><div class="cicon" style="background:#7e57c2">▼</div>
+        <div><h3>Embudo comparado</h3><small>Cada porcentaje es la conversión de la etapa anterior · la peor de cada columna en rojo</small></div></div></div>
+      <div class="tw"><table id="t-cmpfun"><thead></thead><tbody></tbody></table></div>
+      <div class="note">El salto <b>Clic → Lead</b> mide la landing; <b>Lead → Entrada</b> mide el enlace de invitación y el paso a Telegram; <b>Entrada → Pago</b> mide el contenido y la oferta. Un embudo puede tener un CTR excelente y perderlo todo en el segundo salto.</div>
+    </div>
+
+    <div class="card">
+      <div class="chead"><div class="ctitle"><div class="cicon" style="background:#3d63b0">📈</div>
+        <div><h3>Evolución comparada</h3><small>Misma métrica, mismos días, una línea por cada uno</small></div></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+          <div><div class="mini" style="margin-bottom:4px">Métrica</div><div class="pills" id="cmp-met"></div></div>
+          <div><div class="mini" style="margin-bottom:4px">Suavizado</div><div class="pills" id="cmp-mm"></div></div>
+        </div></div>
+      <canvas id="c-cmp"></canvas>
+      <div class="note">En canales de aprobación manual el dato diario salta por lotes de aprobación: usa la media de 7 días antes de sacar conclusiones de una línea.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PRESUPUESTO ============ -->
+<div class="pane" id="pbud">
+  <div class="kpis" id="bud-kpis"></div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#188a55">◑</div>
+      <div><h3 id="bud-h">Presupuesto del mes</h3><small id="bud-sub"></small></div></div>
+      <div class="pills" id="bud-mes"></div></div>
+    <div class="tw"><table id="t-bud"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <div class="note" id="bud-note"></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#3d63b0">📈</div>
+      <div><h3>Gasto acumulado frente al ritmo previsto</h3><small>La línea gris es el reparto lineal del presupuesto. Por encima vas adelantado; por debajo, corto</small></div></div></div>
+    <canvas id="c-bud"></canvas>
+  </div>
+</div>
+
+<!-- ============ EMBUDO ============ -->
+<div class="pane" id="p3">
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#7e57c2">▼</div>
+      <div><h3>Embudo</h3><small>De la impresión al pago, con el porcentaje de conversión entre cada etapa</small></div></div></div>
+    <div class="fun" id="fun-chain"></div>
+    <div class="note" id="fun-worst"></div>
+    <div class="tw" style="margin-top:12px"><table id="t-fun"><thead></thead><tbody></tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#00897b">≡</div>
+      <div><h3>Embudo por línea</h3><small>El mismo recorrido, desglosado · la peor conversión de cada columna en rojo</small></div></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div><div class="mini" style="margin-bottom:4px">Desglosar por</div><div class="pills" id="fun-grp"></div></div>
+        <input class="srch" id="fun-q" placeholder="Filtrar…"></div></div>
+    <div class="tw"><table id="t-fun2"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <div class="note">Las tres primeras etapas son de Meta; entradas, pagadores y pagos son de PremiumPay. Una línea con muy pocos leads tiene porcentajes inestables: se marca con <span class="chip ch-dor">muestra baja</span>.</div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#00acc1">▧</div>
+      <div><h3>Ubicaciones</h3><small>Sólo métricas de Meta: las entradas no tienen ubicación, viven en el enlace</small></div></div>
+      <div><div class="mini" style="margin-bottom:4px">Ver</div><div class="pills" id="plac-vista"></div></div></div>
+    <div id="plac-aviso"></div>
+    <div class="tw"><table id="t-plac"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <div class="note" id="plac-note"></div>
+  </div>
+  <div class="alerts" id="alerts"></div>
+</div>
+
+<!-- ============ CIERRE ============ -->
+<div class="pane" id="p4">
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#188a55">€</div>
+      <div><h3>Cierre</h3><small>Cohorte por fecha de entrada · cifras exactas, sin prorrateo</small></div></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div><div class="mini" style="margin-bottom:4px">Periodo</div><div class="pills" id="cm-per"></div></div>
+        <select id="cm-sem" style="padding:6px 11px;border:1px solid #d8e0ee;border-radius:8px;font-size:11.5px;font-family:inherit;color:#3d63b0;font-weight:600;display:none"></select>
+        <div><div class="mini" style="margin-bottom:4px">Agrupar por</div><div class="pills" id="cm-grp"></div></div>
+      </div></div>
+    <h2 id="cm-h" style="font-size:17px"></h2>
+    <div class="mini" id="cm-sub" style="margin:4px 0 12px"></div>
+    <div class="tw"><table id="cm-t"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <div class="note" id="cm-fx"></div>
+    <div class="pills" style="margin-top:12px">
+      <button class="pill" id="cm-copy">Copiar tabla</button>
+      <button class="pill" id="cm-csv">Descargar CSV</button>
+      <button class="pill" id="cm-json">JSON para /excel-cierre-mes</button></div>
+  </div>
+</div>
+
+<!-- ============ AJUSTES ============ -->
+<div class="pane" id="p5">
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#28477f">⚙</div>
+      <div><h3>Objetivos de CPL</h3><small>Coste por entrada al canal · el objetivo manda sobre la media. Vacío = usa la mediana de los conjuntos activos</small></div></div>
+      <div class="pills"><button class="pill" id="cfg-seed">Rellenar con la mediana actual</button></div></div>
+    <div class="tw"><table class="cfgt" id="t-obj"><thead></thead><tbody></tbody></table></div>
+    <div class="note">Se aplica el objetivo más específico que exista: tipster + país → tipster → global. Un conjunto sin objetivo se compara contra la mediana de los conjuntos activos del periodo, y la acción lo advierte.</div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#188a55">◑</div>
+      <div><h3>Presupuestos mensuales</h3><small>En euros, por tipster y mes. Es lo que puede gastar en Meta, no lo que factura el cliente</small></div></div>
+      <div class="pills"><button class="pill" id="cfg-copmes">Copiar el mes anterior</button></div></div>
+    <div class="tw"><table class="cfgt" id="t-pres"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+    <div class="note">Un tipster sin presupuesto aparece igualmente en la pestaña Presupuesto, con el gasto real y sin ritmo. Los tipsters sin canal en PremiumPay salen marcados: puedes controlarles el presupuesto aunque no puedas medirles el CPL.</div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#c78200">⚖</div>
+      <div><h3>Umbrales de decisión</h3><small>Cuánta evidencia hace falta antes de que el panel dé una orden</small></div></div></div>
+    <div class="tw"><table class="cfgt" id="t-umb"><tbody></tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#7e57c2">🧪</div>
+      <div><h3>Estados manuales</h3><small>Meta ya dice qué está activo o pausado. Aquí sólo lo que Meta no sabe: qué está en test y qué está archivado</small></div></div></div>
+    <div class="tw"><table class="cfgt" id="t-est"><thead></thead><tbody></tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="chead"><div class="ctitle"><div class="cicon" style="background:#546e7a">☁</div>
+      <div><h3>Dónde se guarda</h3><small id="store-mode"></small></div></div>
+    <div class="tw"><table class="cfgt" id="t-sheet"><tbody></tbody></table></div>
+    <div id="cfg-dirty"></div>
+    <div class="pills" style="margin-top:12px">
+      <button class="pill" id="cfg-save">Guardar</button>
+      <button class="pill" id="cfg-reset">Restablecer valores por defecto</button>
+      <button class="pill" id="cfg-exp">Descargar config.json</button>
+      <button class="pill" id="cfg-imp">Importar config.json</button>
+      <span id="cfg-msg" class="ok-msg"></span></div>
+    <details class="fold"><summary>Cómo conectar la hoja de Google (5 min)</summary>
+      <div class="note" id="apps-help"></div></details>
+  </div>
+</div>
+
+<footer id="foot"></footer>
+</div>
+
+<script>
+/* ═══════════════════ ESTADO GLOBAL ═══════════════════ */
+let DATA=null,CFG=null,LOG=[];
+let D,PLAC,RET,AVI,OTROS,OTD,SIN,NOM,CU,MG,TOT,D_MIN,D_MAX,FX,TIPS;
+let PEND=[],PENDF='',PG={},PT={},HAYPEND=false;   // cola de aprobación de PremiumPay
+let BUDMES='';
+const PAL=['#3d63b0','#22b573','#f5a623','#c8353a','#7e57c2','#00acc1','#8d6e63','#546e7a','#d81b60','#43a047','#5e35b1','#00897b','#6d4c41','#ad1457','#1565c0'];
+const TC={};
+const ch={};
+let ST={from:'',to:'',preset:'all',tip:'',pais:'',conj:'',est:'all',who:''};
+let SORT={liga:'gasto',conj:'gasto',addia:'dia'},DIR={liga:-1,conj:-1,addia:1};
+let TAB=0,HOYF='',CMG='tipster',CMP='rango',CMS='';
+let CM={modo:'tipster',sel:[],q:'',met:'cpl',mm:7};   // comparador
+let FUNG='tipster',FUNQ='',PLACV='ubi';                            // embudo por linea
+let CONJQ='',CONJF='';                                 // buscador y filtros de la tabla de conjuntos
+let DIRTY=false;                                       // hay cambios de configuracion sin guardar
+let MAPAQ=null;                                        // medianas de los cuadrantes del mapa
+
+const CFG_DEF={version:1,kpi_principal:'cpl',
+  objetivos:{},           // "TIPSTER||PAIS" -> nº   ("TIPSTER||*" = todo el tipster, "*||*" = global)
+  presupuestos:{},        // "TIPSTER||AAAA-MM" -> € del mes
+  umbral:{gasto_min_eur:25,entradas_min:10,dias_min:3,inactividad_dias:3,
+          escalar_pct:75,optimizar_pct:125,pausar_pct:200,pagadores_min:10},
+  estados:{},             // grupo -> {estado,hasta,owner,nota}
+  equipo:['Ana','Sofía','Dario','Oscar','Pablo'],
+  meta:{quien:'',cuando:''},   // quién tocó la configuración por última vez y cuándo
+  sheet:{url:'',activo:false}};
+
+/* ═══════════════════ FORMATO ═══════════════════ */
+const nf=n=>(n||0).toLocaleString('es-ES',{maximumFractionDigits:0});
+const ef=n=>(isFinite(n)&&n!==null?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const pf=n=>(isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' %';
+const xf=n=>(isFinite(n)?n:0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+'×';
+const dv=(a,b)=>b?a/b:null;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function heat(v,mx,rgb){const a=mx>0?Math.min(1,Math.max(0,v/mx)):0;return a<.02?'':'background:rgba('+rgb+','+(0.08+a*0.7).toFixed(3)+')'}
+function addD(iso,n){const t=new Date(iso+'T12:00:00Z');t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10)}
+function diff(a,b){return Math.round((new Date(a+'T12:00:00Z')-new Date(b+'T12:00:00Z'))/86400000)}
+const hoyISO=()=>new Date().toISOString().slice(0,10);
+
+/* ═══════════════════ CARGA ═══════════════════ */
+/* data.json de la v1 se escribía en cp1252: si el UTF-8 falla, reintenta en windows-1252
+   para que el panel siga funcionando mientras no se ejecute build.py v2. */
+async function loadJSON(url,opt){
+  const r=await fetch(url+'?v='+Date.now(),{cache:'no-store'});
+  if(!r.ok){if(opt&&opt.soft)return null;throw new Error(url+' → HTTP '+r.status)}
+  const buf=await r.arrayBuffer();
+  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(buf))}
+  catch(e){
+    try{const o=JSON.parse(new TextDecoder('windows-1252').decode(buf));o.__cp1252=true;return o}
+    catch(e2){if(opt&&opt.soft)return null;throw e2}
+  }
+}
+function bind(){
+  D=DATA.daily;PLAC=DATA.placement||[];RET=DATA.retencion||[];AVI=DATA.avisos||[];OTROS=DATA.otros||[];
+  SIN=DATA.sin_conjunto||'Genérico (sin conjunto)';NOM=DATA.nombres||{};CU=DATA.cuadre||{};
+  MG=DATA.meta_grupo||{};TOT=DATA.totales||null;OTD=DATA.otros_daily||[];
+  D_MIN=DATA.rango[0];D_MAX=DATA.rango[1];FX=DATA.fx;
+  /* Cola de aprobación. Ojo: `solicitudes` y `entradas_vida` son totales DE POR VIDA del
+     enlace, no del periodo filtrado. Por eso los pendientes no entran nunca en `daily`
+     ni en el CPL: solo alimentan el CPL ajustado, que es un escenario, no una medición. */
+  PEND=DATA.pendientes||[];PENDF=DATA.pendientes_fecha||'';
+  PG={};PT={};
+  PEND.forEach(r=>{
+    const a=PG[r.grupo]=PG[r.grupo]||{pend:0,sol:0,vida:0};
+    a.pend+=r.pendientes||0;a.sol+=r.solicitudes||0;a.vida+=r.entradas_vida||0;
+    const b=PT[r.tipster]=PT[r.tipster]||{pend:0,sol:0,vida:0};
+    b.pend+=r.pendientes||0;b.sol+=r.solicitudes||0;b.vida+=r.entradas_vida||0;});
+  HAYPEND=PEND.length>0;
+  D.forEach(r=>{if(!r.pais||!String(r.pais).trim())r.pais='—'});
+  TIPS=[...new Set(D.map(r=>r.tipster))].sort();
+  TIPS.forEach((t,i)=>TC[t]=PAL[i%PAL.length]);
+  ST.from=D_MIN;ST.to=D_MAX;
+}
+
+/* ═══════════════════ ALMACENAMIENTO ═══════════════════ */
+/* Dos modos. Hoja de Google (equipo, compartido) o navegador (una persona).
+   El repo aporta los valores por defecto; la hoja los sobrescribe. */
+const STORE={
+  mode:'local',
+  async load(){
+    let cfg=JSON.parse(JSON.stringify(CFG_DEF)),log=[];
+    const rep=await loadJSON('config.json',{soft:true});
+    if(rep)cfg=merge(cfg,normCfg(rep));
+    const loc=localStorage.getItem('tz_cfg');
+    if(loc){try{cfg=merge(cfg,JSON.parse(loc))}catch(e){}}
+    const ll=localStorage.getItem('tz_log');
+    if(ll){try{log=JSON.parse(ll)}catch(e){}}
+    if(cfg.sheet&&cfg.sheet.activo&&cfg.sheet.url){
+      try{
+        const r=await fetch(cfg.sheet.url+'?accion=leer',{cache:'no-store'});
+        const j=await r.json();
+        if(j&&j.ok){if(j.config)cfg=merge(cfg,j.config);log=j.log||[];STORE.mode='sheet'}
+      }catch(e){console.warn('Hoja no disponible, usando copia local',e)}
+    }
+    CFG=cfg;LOG=log;
+  },
+  async save(){
+    localStorage.setItem('tz_cfg',JSON.stringify(CFG));
+    if(STORE.mode==='sheet'){
+      try{await fetch(CFG.sheet.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({accion:'guardar_config',config:CFG})});return 'Guardado en la hoja'}
+      catch(e){return 'La hoja no respondió · guardado sólo en este navegador'}
+    }
+    return 'Guardado en este navegador';
+  },
+  async log(e){
+    LOG.unshift(e);LOG=LOG.slice(0,500);
+    localStorage.setItem('tz_log',JSON.stringify(LOG));
+    if(STORE.mode==='sheet'){
+      try{await fetch(CFG.sheet.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({accion:'registrar',entrada:e})})}catch(err){console.warn(err)}
+    }
+  }
+};
+function merge(a,b){const o={...a};for(const k in b){
+  if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object'&&!Array.isArray(a[k]))o[k]=merge(a[k],b[k]);
+  else if(b[k]!==null&&b[k]!==undefined)o[k]=b[k]}return o}
+/* acepta el config.json de ejemplo del repo y lo lleva al esquema interno */
+function normCfg(r){
+  const o={};
+  if(r.objetivos)o.objetivos=r.objetivos;
+  if(r.presupuestos)o.presupuestos=r.presupuestos;
+  if(r.umbral_decision)o.umbral={gasto_min_eur:r.umbral_decision.gasto_min_eur,entradas_min:r.umbral_decision.entradas_min,
+    dias_min:r.umbral_decision.dias_min,inactividad_dias:r.umbral_decision.ventana_inactividad_dias};
+  if(r.umbral)o.umbral={...(o.umbral||{}),...r.umbral};
+  if(r.objetivos_por_tipster){o.objetivos=o.objetivos||{};
+    for(const k in r.objetivos_por_tipster){const v=r.objetivos_por_tipster[k].cpl_objetivo_eur;
+      if(v!=null)o.objetivos[k+'||*']=v}}
+  if(r.objetivos_globales&&r.objetivos_globales.cpl_objetivo_eur!=null){o.objetivos=o.objetivos||{};o.objetivos['*||*']=r.objetivos_globales.cpl_objetivo_eur}
+  if(r.estados_manuales)o.estados=r.estados_manuales;
+  if(r.estados)o.estados=r.estados;
+  if(r.equipo)o.equipo=r.equipo;
+  if(r.sheet)o.sheet=r.sheet;
+  return o;
+}
+
+/* ═══════════════════ MÉTRICAS ═══════════════════ */
+const KM=['impresiones','alcance','clics','clics_all','lpv','leads','entradas','pagadores','pagos','ingresos','bajas'];
+/* Inversión de una fila, ya en EUR.
+   Las filas que vienen de una cuenta de Meta que factura en euros traen
+   moneda:'EUR' y NO se convierten. El resto son USD y pasan por el FX de la
+   cabecera. Sin el campo `moneda` se comporta exactamente como antes. */
+function gEur(r){const g=r.gasto_usd||0;return r.moneda==='EUR'?g:g*FX}
+function sum(rows){const o={gasto:0};KM.forEach(k=>o[k]=0);
+  rows.forEach(r=>{o.gasto+=gEur(r);KM.forEach(k=>o[k]+=r[k]||0)});return o}
+const pc=(a,b)=>b?a/b*100:null;   /* porcentaje que devuelve null (no 0) cuando no hay denominador */
+function met(m){return{...m,cpl:dv(m.gasto,m.entradas),cplm:dv(m.gasto,m.leads),cpc:dv(m.gasto,m.clics),
+  cpm:dv(m.gasto,m.impresiones)*1000,ctr:pc(m.clics,m.impresiones),
+  l2e:pc(m.entradas,m.leads),tasa:pc(m.pagadores,m.entradas),
+  c2l:pc(m.leads,m.clics),c2lpv:pc(m.lpv,m.clics),lpv2l:pc(m.leads,m.lpv),
+  ticket:dv(m.ingresos,m.pagadores),
+  ing_ent:dv(m.ingresos,m.entradas),roas:dv(m.ingresos,m.gasto),b24:pc(m.bajas,m.entradas)}}
+function grp(rows,key){const o={};rows.forEach(r=>{const k=r[key];(o[k]=o[k]||[]).push(r)});
+  return Object.entries(o).map(([k,v])=>({k,...met(sum(v))}))}
+
+/* Filtro de Estado de la cabecera.
+   FIX: antes ST.est solo recortaba el desplegable de Conjunto (llenarConj) y no
+   tocaba los datos, así que elegir "Solo activos" o "Todos" no cambiaba nada en
+   pantalla. Ahora filtra las filas como el resto de slicers.
+   El Genérico no es un conjunto de Meta y no tiene estado: solo aparece con "Todos". */
+const _epc=new Map();
+function estPasa(g){
+  if(ST.est==='all')return true;
+  if(g===SIN)return false;
+  if(_epc.has(g))return _epc.get(g);
+  const e=estadoDe(g);
+  const v=ST.est==='act'?e.activo:(ST.est==='nod'?e.cod==='NOD':!e.activo);
+  _epc.set(g,v);return v;
+}
+/* filas del periodo, sin filtrar por conjunto (para totales) */
+function rowsBase(){return D.filter(r=>r.dia>=ST.from&&r.dia<=ST.to&&(!ST.tip||r.tipster===ST.tip)&&(!ST.pais||r.pais===ST.pais)&&estPasa(r.grupo))}
+/* filas visibles, ya con el slicer de conjunto */
+function F(){return rowsBase().filter(r=>!ST.conj||r.grupo===ST.conj)}
+/* periodo inmediatamente anterior, misma longitud */
+function prevRange(){const n=diff(ST.to,ST.from)+1;return[addD(ST.from,-n),addD(ST.from,-1)]}
+function rowsPrev(){const[a,b]=prevRange();
+  return D.filter(r=>r.dia>=a&&r.dia<=b&&(!ST.tip||r.tipster===ST.tip)&&(!ST.pais||r.pais===ST.pais)&&(!ST.conj||r.grupo===ST.conj)&&estPasa(r.grupo))}
+
+/* ═══════════════════ ESTADO DE CADA CONJUNTO ═══════════════════ */
+/* Orden de mando: estado manual del equipo → estado real de Meta → inactividad.
+   Sin la columna "Ad set delivery" caemos en la última, que es una aproximación. */
+function estadoDe(g){
+  if(g===SIN)return{cod:'GEN',txt:'Genérico',chip:'ch-dor',activo:false};
+  const man=CFG.estados[g];
+  if(man&&man.estado){
+    const vig=!man.hasta||man.hasta>=hoyISO();
+    if(vig){
+      if(man.estado==='ARCHIVADO')return{cod:'ARC',txt:'Archivado',chip:'ch-arc',activo:false,man:true,nota:man.nota,owner:man.owner};
+      if(man.estado==='TESTING')return{cod:'TST',txt:'En test',chip:'ch-tst',activo:true,test:true,man:true,nota:man.nota,owner:man.owner};
+      if(man.estado==='PAUSADO')return{cod:'PAU',txt:'Pausado (manual)',chip:'ch-pau',activo:false,man:true,nota:man.nota,owner:man.owner};
+    }
+  }
+  const m=MG[g];
+  /* estado_meta es el valor crudo de la columna "Ad set delivery" de Meta.
+     Se lee directo: el campo derivado "estado" del pipeline colapsaba todo a ACTIVO. */
+  const EM=(m&&m.estado_meta)?m.estado_meta.map(x=>String(x).toLowerCase()):[];
+  if(EM.length){
+    const tiene=v=>EM.includes(v), mix=EM.length>1?' (parcial)':'';
+    if(tiene('active'))
+      return{cod:'ACT',txt:'Activo en Meta'+mix,chip:'ch-act',activo:true,fuente:'meta',raw:EM};
+    if(tiene('not_delivering'))
+      return{cod:'NOD',txt:'No entrega',chip:'ch-nod',activo:false,fuente:'meta',raw:EM};
+    if(tiene('inactive')||tiene('adset_paused')||tiene('campaign_paused')||tiene('paused'))
+      return{cod:'PAU',txt:'Pausado en Meta',chip:'ch-pau',activo:false,fuente:'meta',raw:EM};
+    if(tiene('archived')||tiene('deleted'))
+      return{cod:'ARC',txt:'Archivado en Meta',chip:'ch-arc',activo:false,fuente:'meta',raw:EM};
+    if(tiene('pending_review'))
+      return{cod:'TST',txt:'En revisión',chip:'ch-tst',activo:true,fuente:'meta',raw:EM};
+    if(tiene('rejected')||tiene('recently_rejected'))
+      return{cod:'REJ',txt:'Rechazado',chip:'ch-pau',activo:false,fuente:'meta',raw:EM};
+    return{cod:'PAU',txt:EM[0],chip:'ch-dor',activo:false,fuente:'meta',raw:EM};
+  }
+  if(m&&m.estado)return m.estado==='ACTIVO'
+    ?{cod:'ACT',txt:'Activo en Meta',chip:'ch-act',activo:true,fuente:'meta'}
+    :{cod:'PAU',txt:'Pausado en Meta',chip:'ch-pau',activo:false,fuente:'meta'};
+  const ult=m&&m.ultimo_gasto?m.ultimo_gasto:ultimoGasto(g);
+  if(!ult)return{cod:'DOR',txt:'Sin inversión',chip:'ch-dor',activo:false,fuente:'inferido'};
+  const d=diff(ST.to,ult);
+  return d<=CFG.umbral.inactividad_dias
+    ?{cod:'ACT',txt:'Con inversión reciente',chip:'ch-act',activo:true,fuente:'inferido'}
+    :{cod:'DOR',txt:'Sin gasto desde '+ult,chip:'ch-dor',activo:false,fuente:'inferido',ultimo:ult};
+}
+const _ug={};
+function ultimoGasto(g){if(g in _ug)return _ug[g];
+  let u=null;D.forEach(r=>{if(r.grupo===g&&r.gasto_usd>0&&(!u||r.dia>u))u=r.dia});return _ug[g]=u}
+
+/* ═══════════════════ OBJETIVO DE CPL ═══════════════════ */
+function objetivoCPL(tipster,pais,medActivos){
+  const pref=Object.keys(NOM).find(p=>NOM[p]===tipster)||tipster;
+  const O=CFG.objetivos||{};
+  const claves=[pref+'||'+pais,tipster+'||'+pais,pref+'||*',tipster+'||*','*||*'];
+  for(const k of claves)if(O[k]!=null&&O[k]!==''&&isFinite(+O[k]))return{v:+O[k],fuente:'objetivo'};
+  return medActivos?{v:medActivos,fuente:'mediana'}:{v:null,fuente:'ninguna'};
+}
+function medianaActivos(cards){
+  const v=cards.filter(c=>c.est.activo&&c.cpl!==null&&c.entradas>=CFG.umbral.entradas_min).map(c=>c.cpl).sort((a,b)=>a-b);
+  if(!v.length)return null;const m=Math.floor(v.length/2);
+  return v.length%2?v[m]:(v[m-1]+v[m])/2;
+}
+
+/* ═══════════════════ MOTOR DE DECISIÓN (CPL primero) ═══════════════════ */
+const TIER={AHORA:{n:0,t:'Hacer ahora',d:'Cuesta dinero cada hora que pasa'},
+  REVISAR:{n:1,t:'Revisar hoy',d:'Merece una mirada, no una decisión automática'},
+  OPORT:{n:2,t:'Oportunidad',d:'Va por debajo del objetivo y aguanta más presupuesto'},
+  OK:{n:3,t:'Sin acción',d:'Dentro de objetivo'},
+  DATOS:{n:4,t:'Sin evidencia suficiente',d:'Todavía no se puede juzgar'}};
+
+function decide(c,ctx){
+  const U=CFG.umbral,ob=c.objetivo,T=ob.v;
+  const evidencia=c.gasto>=U.gasto_min_eur;
+  const fiable=c.entradas>=U.entradas_min;
+
+  if(!evidencia) return R('DATOS','ESPERAR','b-dat','Todavía no ha gastado lo suficiente para juzgarlo',
+    `${ef(c.gasto)} invertidos, el mínimo son ${ef(U.gasto_min_eur)}`,'baja','Captación');
+
+  if(c.leads>=5&&c.entradas===0) return R('AHORA','REVISAR ENLACE','b-pau',
+    'Genera leads pero ni una sola persona llega al canal',
+    `${nf(c.leads)} leads y 0 entradas — apunta a un enlace roto, mal nombrado o ausente en PremiumPay`,'alta','Conversión a canal');
+
+  if(c.leads===0&&c.impresiones>=1000) return R('AHORA','PAUSAR','b-pau',
+    'Tiene entrega pero no genera ni un lead',`${nf(c.impresiones)} impresiones sin un solo lead`,'alta','Captación');
+
+  if(T&&c.entradas===0&&c.gasto>=T*2) return R('AHORA','PAUSAR','b-pau',
+    'Ha gastado más de dos CPL objetivo sin una sola entrada',
+    `${ef(c.gasto)} sin entradas, con objetivo de ${ef(T)} por entrada`,'alta','Conversión a canal');
+
+  if(T&&fiable&&c.cpl>T*(U.pausar_pct/100)){
+    /* La aprobación manual puede disparar el CPL sin que el conjunto funcione mal:
+       si vaciando la cola el CPL volvería dentro del umbral, esto no se pausa, se desatasca. */
+    if(c.pend>0&&c.cplaj!==null&&c.cplaj<=T*(U.pausar_pct/100))
+      return R('REVISAR','VACIAR COLA','b-inv',
+        'El CPL se dispara por entradas sin aprobar, no por rendimiento',
+        `CPL de ${ef(c.cpl)} frente a ${ef(T)}, pero con ${nf(c.pend)} solicitudes sin aprobar el CPL ajustado sería ${ef(c.cplaj)} · aprueba la cola en PremiumPay antes de tocar nada`,
+        'media','Captación');
+    return R('AHORA','PAUSAR','b-pau',
+      'CPL muy por encima del objetivo, con volumen suficiente para afirmarlo',
+      `CPL de ${ef(c.cpl)} frente a un objetivo de ${ef(T)} · ${(c.cpl/T).toFixed(1)}× el objetivo, sobre ${nf(c.entradas)} entradas`+
+      (c.pend>0?` (ya descontadas ${nf(c.pend)} solicitudes pendientes: ni aprobándolas todas bajaría del umbral)`:''),
+      'alta','Captación');
+  }
+
+  if(ctx.l2e&&c.l2e!==null&&c.l2e<ctx.l2e*0.5&&c.leads>=15) return R('REVISAR','INVESTIGAR','b-inv',
+    'Consigue leads a buen precio pero casi nadie llega al Telegram',
+    `sólo el ${pf(c.l2e)} de los leads entra al canal, frente al ${pf(ctx.l2e)} del resto`,'alta','Conversión a canal');
+
+  if(T&&fiable&&c.cpl>T*(U.optimizar_pct/100)) return R('REVISAR','OPTIMIZAR','b-opt',
+    'CPL por encima del objetivo pero todavía recuperable',
+    `CPL de ${ef(c.cpl)} frente a ${ef(T)} · ${Math.round((c.cpl/T-1)*100)}% por encima`,'media','Captación');
+
+  if(T&&!fiable&&c.cpl!==null&&c.cpl>T*(U.pausar_pct/100)) return R('REVISAR','VIGILAR','b-inv',
+    'El CPL pinta mal pero aún no hay entradas suficientes para decidir',
+    `CPL de ${ef(c.cpl)} sobre sólo ${nf(c.entradas)} entradas (mínimo ${U.entradas_min})`,'baja','Captación');
+
+  if(T&&fiable&&c.cpl<=T*(U.escalar_pct/100)) return R('OPORT','ESCALAR','b-esc',
+    'Capta por debajo del objetivo y aguanta más presupuesto',
+    `CPL de ${ef(c.cpl)} frente a ${ef(T)} · ${Math.round((1-c.cpl/T)*100)}% por debajo, sobre ${nf(c.entradas)} entradas`,
+    c.entradas>=U.entradas_min*2?'alta':'media','Sano');
+
+  if(c.entradas>=30&&c.pagadores===0) return R('REVISAR','VIGILAR','b-inv',
+    'Trae suscriptores pero ninguno ha pagado todavía',
+    `${nf(c.entradas)} entradas y 0 pagadores — informa, pero con tan pocos pagadores en total no basta para cortar`,'baja','Monetización');
+
+  if(T&&fiable) return R('OK','MANTENER','b-opt','Dentro de objetivo',
+    `CPL de ${ef(c.cpl)} frente a ${ef(T)}`,'media','Sano');
+
+  return R('DATOS','ESPERAR','b-dat','Aún no hay entradas suficientes para un CPL fiable',
+    `${nf(c.entradas)} entradas, el mínimo son ${U.entradas_min}`,'baja','Captación');
+
+  function R(tier,accion,badge,causa,motivo,conf,fase){
+    if(c.est.test&&(tier==='AHORA')){tier='REVISAR';motivo+=' · marcado como TEST, no se pausa automáticamente'}
+    if(ob.fuente==='mediana')motivo+=' (sin objetivo definido: se compara contra la mediana de los activos)';
+    if(ob.fuente==='ninguna')motivo+=' (sin objetivo ni mediana disponible)';
+    return{tier,accion,badge,causa,motivo,conf,fase}}
+}
+
+/* tarjeta por conjunto, con estado, objetivo y decisión */
+function tarjetas(rows){
+  let C=grp(rows,'grupo').map(c=>{
+    const r=rows.find(x=>x.grupo===c.k);
+    const pq=PG[c.k]||{pend:0,sol:0,vida:0};
+    return{...c,tipster:r?r.tipster:'',pais:r?r.pais:'—',est:estadoDe(c.k),
+      pend:pq.pend,aprob:pq.sol?pq.vida/pq.sol*100:null,
+      cplaj:pq.pend?dv(c.gasto,c.entradas+pq.pend):dv(c.gasto,c.entradas)}});
+  const med=medianaActivos(C);
+  const act=C.filter(c=>c.est.activo&&c.k!==SIN);
+  const ctx={l2e:met(sum(rows.filter(r=>r.grupo!==SIN))).l2e};
+  C.forEach(c=>{c.objetivo=objetivoCPL(c.tipster,c.pais,med);c.d=c.k===SIN?null:decide(c,ctx)});
+  C.med=med;C.nAct=act.length;
+  return C;
+}
+
+/* ═══════════════════ PESTAÑA · HOY ═══════════════════ */
+function frescura(){
+  const box=document.getElementById('freshbox');
+  const h=[];
+  const ult=DATA.rango_meta?DATA.rango_meta[1]:D_MAX;
+  const retraso=diff(hoyISO(),ult);
+  if(retraso>=2)h.push(`<div class="warnbox bad"><h3>Los datos tienen ${retraso} días</h3><p>El último día de Meta es <b>${ult}</b>. Cualquier decisión que tomes ahora se basa en lo que pasaba hace ${retraso} días. Vuelve a ejecutar la extracción antes de mover presupuesto.</p></div>`);
+  if(DATA.__cp1252)h.push(`<div class="warnbox bad"><h3>data.json no está en UTF-8</h3><p>El archivo viene en cp1252: los símbolos €, — y las tildes están rotos. El panel lo ha leído igualmente, pero ejecuta la versión nueva de <code>build.py</code> para corregirlo.</p></div>`);
+  if(!DATA.tiene_estado)h.push(`<div class="warnbox"><h3>Falta la columna «Ad set delivery» en el export de Meta</h3><p>Sin ella el panel no sabe qué está activo y lo deduce de la inversión de los últimos ${CFG.umbral.inactividad_dias} días. Funciona, pero un conjunto pausado hoy seguirá pareciendo activo hasta mañana. Añade la columna al preset de columnas de Ads Manager.</p></div>`);
+  if(TOT&&TOT.pct_atribuible<80)h.push(`<div class="warnbox"><h3>Sólo el ${TOT.pct_atribuible}% de la inversión es atribuible</h3><p>Se están midiendo <b>${ef(TOT.gasto_atribuible_eur)}</b> de un total real de <b>${ef(TOT.gasto_total_eur)}</b>. Los ${ef(TOT.gasto_otros_eur)} restantes son tipsters sin canal en PremiumPay: aparecen en el gasto de Meta pero ninguna entrada les cuenta. Todo el CPL de este panel se refiere sólo a la parte medible.</p></div>`);
+  const nPag=CU.pagos||0;
+  if((CU.pagadores||nPag)<CFG.umbral.pagadores_min)h.push(`<div class="warnbox"><h3>Retorno todavía no interpretable</h3><p>Hay <b>${nf(nPag)} pagos</b> en todo el periodo. El ROAS se mueve por completo con una persona, así que aquí se usa como indicio y nunca como motivo para mover presupuesto. Las decisiones se toman sobre <b>CPL</b>.</p></div>`);
+  h.push(avisoCola());
+  h.push(avisoRechazos());
+  h.push(avisoPacing());
+  box.innerHTML=h.filter(Boolean).join('');
+}
+function cambios(rows,prev){
+  const a=met(sum(rows)),b=met(sum(prev));
+  const [pa,pb]=prevRange();
+  document.getElementById('chg-sub').textContent=`${ST.from} a ${ST.to} comparado con ${pa} a ${pb}`;
+  const items=[['Inversión',a.gasto,b.gasto,ef,false],['Entradas',a.entradas,b.entradas,nf,true],
+    ['CPL',a.cpl,b.cpl,ef,false,true],['Lead→Entrada',a.l2e,b.l2e,pf,true],
+    ['CTR',a.ctr,b.ctr,pf,true],['Pagadores',a.pagadores,b.pagadores,nf,true]];
+  document.getElementById('chg').innerHTML=items.map(([lb,v,p,fmt,mejorSube,inv])=>{
+    const d=(p&&isFinite(p)&&p!==0&&isFinite(v))?(v/p-1)*100:null;
+    let cls='fl',txt='sin comparativa';
+    if(d!==null){const sube=d>=0;const bueno=inv?!sube:(mejorSube?sube:sube);
+      cls=Math.abs(d)<2?'fl':((inv? (d<0):(mejorSube? d>0:d>0))?'up':'dn');
+      if(lb==='Inversión')cls='fl';
+      txt=(d>=0?'↑ ':'↓ ')+Math.abs(d).toFixed(0)+'% vs periodo anterior'}
+    return `<div class="kpi"><div class="lb">${lb}</div><div class="vl">${v===null?'—':fmt(v)}</div><div class="dl ${cls}">${txt}</div></div>`}).join('');
+}
+function acciones(C){
+  const vis=C.filter(c=>c.k!==SIN&&c.est.activo);
+  const fuera=C.filter(c=>c.k!==SIN&&!c.est.activo);
+  let L=vis.slice().sort((a,b)=>TIER[a.d.tier].n-TIER[b.d.tier].n||b.gasto-a.gasto);
+  if(HOYF)L=L.filter(c=>c.d.tier===HOYF);
+  const acc=L.filter(c=>c.d.tier!=='OK'&&c.d.tier!=='DATOS');
+  const sinDatos=L.filter(c=>c.d.tier==='DATOS');
+  const ok=L.filter(c=>c.d.tier==='OK');
+
+  const cont=document.getElementById('acciones');
+  if(!acc.length){
+    cont.innerHTML=`<div class="empty"><b>Nada urgente</b>${vis.length?`${vis.length} conjuntos activos, todos dentro de objetivo o sin evidencia suficiente.`:'No hay ningún conjunto activo en este periodo con los filtros actuales.'}</div>`;
+  }else{
+    const tiers=['AHORA','REVISAR','OPORT'];
+    cont.innerHTML=tiers.map(t=>{
+      const g=acc.filter(c=>c.d.tier===t);if(!g.length)return '';
+      return `<div class="tier"><h4>${TIER[t].t} · ${g.length} — <span style="font-weight:600;text-transform:none;letter-spacing:0">${TIER[t].d}</span></h4>`+
+        g.slice(0,10).map(fila).join('')+'</div>'}).join('');
+  }
+  document.getElementById('excluidos').innerHTML=
+    fold(`Conjuntos parados o archivados (${fuera.length})`,'No reciben órdenes: Meta dice que no están entregando, o alguien los marcó como archivados.',fuera)+
+    fold(`Sin evidencia suficiente (${sinDatos.length})`,`Por debajo de ${ef(CFG.umbral.gasto_min_eur)} de inversión o de ${CFG.umbral.entradas_min} entradas. Déjalos correr.`,sinDatos)+
+    fold(`Dentro de objetivo (${ok.length})`,'Nada que hacer hoy.',ok);
+  cont.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>marcar(b.dataset.act,b.dataset.grupo,b.dataset.rec));
+  document.querySelectorAll('[data-goad]').forEach(e=>e.onclick=()=>{ST.conj=e.dataset.goad;syncFiltros();setTab(2);render()});
+
+  function fila(c){
+    const reg=LOG.find(l=>l.grupo===c.k&&(l.decision!=='pospuesto'||l.hasta>=hoyISO()));
+    const marca=reg?`<span class="chip ${reg.decision==='hecho'?'ch-act':'ch-dor'}">${esc(reg.decision)} · ${esc(reg.quien)}</span>`:'';
+    return `<div class="act">
+      <div class="badge ${c.d.badge}">${c.d.accion}</div>
+      <div class="act-b">
+        <h4><span class="dot" style="background:${TC[c.tipster]||'#999'}"></span>
+          <span class="link" data-goad="${esc(c.k)}">${esc(c.k)}</span>
+          <span class="chip ${c.est.chip}">${esc(c.est.txt)}</span>${marca}</h4>
+        <div class="ev">${c.d.causa}. <b>Evidencia:</b> ${c.d.motivo}. Inversión en juego: <b>${ef(c.gasto)}</b>.</div>
+      </div>
+      <div class="act-r"><span class="cv c-${c.d.conf}">Confianza ${c.d.conf}</span>
+        ${nf(c.entradas)} entradas · ${nf(c.pagadores)} pagadores
+        <div class="btns">
+          <button data-act="hecho" data-grupo="${esc(c.k)}" data-rec="${esc(c.d.accion)}">Hecho</button>
+          <button data-act="ignorado" data-grupo="${esc(c.k)}" data-rec="${esc(c.d.accion)}">Ignorar</button>
+          <button data-act="pospuesto" data-grupo="${esc(c.k)}" data-rec="${esc(c.d.accion)}">Posponer 7d</button>
+        </div></div></div>`}
+  function fold(t,d,arr){
+    if(!arr.length)return '';
+    return `<details class="fold"><summary>${t}</summary><div class="note">${d}</div>`+
+      `<div class="tw"><table><thead><tr><th>Conjunto</th><th>Estado</th><th>Inversión</th><th>Entradas</th><th>CPL</th><th>Objetivo</th></tr></thead><tbody>`+
+      arr.sort((a,b)=>b.gasto-a.gasto).map(c=>`<tr><td class="nm"><span class="link" data-goad="${esc(c.k)}">${esc(c.k)}</span></td>
+        <td><span class="chip ${c.est.chip}">${esc(c.est.txt)}</span></td><td>${ef(c.gasto)}</td><td>${nf(c.entradas)}</td>
+        <td>${c.cpl===null?'—':ef(c.cpl)}</td><td>${c.objetivo.v?ef(c.objetivo.v):'—'}</td></tr>`).join('')+
+      '</tbody></table></div></details>'}
+}
+async function marcar(decision,grupo,rec){
+  if(!ST.who){alert('Elige quién eres en la cabecera antes de marcar una decisión.');return}
+  let nota='';
+  if(decision==='ignorado'){nota=prompt('¿Por qué se ignora? (queda registrado)','')||''}
+  const e={ts:new Date().toISOString().slice(0,16).replace('T',' '),grupo,recomendacion:rec,decision,
+    quien:ST.who,nota,hasta:decision==='pospuesto'?addD(hoyISO(),7):''};
+  await STORE.log(e);render();
+}
+/* Cierra el bucle: una recomendación sólo vale si lo que pasó después la respalda.
+   Se compara la ventana de 7 días anterior a la decisión con los 7 días siguientes. */
+function resultadoDecision(l,vent){
+  const f=(l.ts||'').slice(0,10);
+  if(!f||!l.grupo)return null;
+  const win=(a,b)=>met(sum(D.filter(r=>r.grupo===l.grupo&&r.dia>=a&&r.dia<=b)));
+  const antes=win(addD(f,-vent),addD(f,-1)), desp=win(f,addD(f,vent-1));
+  const dispo=Math.max(0,Math.min(vent,diff(D_MAX,f)+1));
+  const rec=String(l.recomendacion||'').toUpperCase();
+  const o={f,vent,dispo,antes,desp,dcpl:(antes.cpl&&desp.cpl)?desp.cpl/antes.cpl-1:null,
+    dgasto:antes.gasto?desp.gasto/antes.gasto-1:null};
+  if(l.decision!=='hecho'){o.txt='—';o.cls='fl';return o}
+  if(dispo<vent){o.txt=`esperando · ${dispo}/${vent} días`;o.cls='fl';return o}
+  let ok=null;
+  if(rec.includes('PAUSAR'))ok=desp.gasto<=antes.gasto*0.3;
+  else if(rec.includes('ESCALAR'))ok=(o.dgasto!==null&&o.dgasto>=0.1)&&(o.dcpl===null||o.dcpl<=0.15);
+  else if(o.dcpl!==null)ok=o.dcpl<=-0.1;
+  o.ok=ok;
+  o.txt=ok===null?'sin CPL comparable':(ok?'funcionó':'no mejoró');
+  o.cls=ok===null?'fl':(ok?'up':'dn');
+  return o;
+}
+function historial(){
+  const T=document.getElementById('t-log');
+  T.querySelector('thead').innerHTML='<tr><th>Cuándo</th><th>Conjunto</th><th>Recomendación</th><th>Decisión</th><th>Quién</th><th>CPL 7d antes</th><th>CPL 7d después</th><th>Inversión</th><th>Resultado</th><th>Nota</th></tr>';
+  if(!LOG.length){
+    T.querySelector('tbody').innerHTML='<tr><td colspan="10" style="text-align:center;color:#6b7a90;font-weight:400">Todavía no hay decisiones registradas. Pulsa Hecho, Ignorar o Posponer en cualquier acción.</td></tr>';
+    document.getElementById('log-res').innerHTML='<div class="note">Cuando el equipo empiece a marcar decisiones, aquí aparecerá si las recomendaciones del panel mejoraron el resultado: se compara el CPL de los 7 días previos con el de los 7 posteriores a cada decisión aceptada.</div>';
+    return}
+  const R=LOG.slice(0,40).map(l=>({l,r:resultadoDecision(l,7)}));
+  T.querySelector('tbody').innerHTML=R.map(({l,r})=>`<tr><td class="nm">${esc(l.ts)}</td><td class="nm">${esc(l.grupo)}</td>
+    <td>${esc(l.recomendacion)}</td><td>${esc(l.decision)}${l.hasta?' → '+esc(l.hasta):''}</td><td>${esc(l.quien)}</td>
+    <td>${r&&r.antes.cpl?ef(r.antes.cpl):'—'}</td>
+    <td>${r&&r.desp.cpl?ef(r.desp.cpl):'—'}${r&&r.dcpl!==null?' <span class="'+(r.dcpl<=0?'pos':'neg')+'">'+(r.dcpl>0?'+':'')+Math.round(r.dcpl*100)+'%</span>':''}</td>
+    <td>${r?ef(r.desp.gasto):'—'}${r&&r.dgasto!==null?' <span class="mini">'+(r.dgasto>0?'+':'')+Math.round(r.dgasto*100)+'%</span>':''}</td>
+    <td><span class="${r?r.cls:'fl'}" style="font-weight:700">${r?r.txt:'—'}</span></td>
+    <td class="nm">${esc(l.nota)}</td></tr>`).join('');
+  const cerr=R.filter(x=>x.r&&x.l.decision==='hecho'&&x.r.ok!==null&&x.r.ok!==undefined&&x.r.dispo>=7);
+  const bien=cerr.filter(x=>x.r.ok).length;
+  document.getElementById('log-res').innerHTML=cerr.length
+    ? `<div class="note"><b>${bien} de ${cerr.length} recomendaciones aceptadas con 7 días de recorrido salieron bien.</b> «Funcionó» significa: si la orden era pausar, la inversión cayó por debajo del 30%; si era escalar, la inversión subió al menos un 10% sin que el CPL empeorara más de un 15%; en el resto, que el CPL bajó al menos un 10%. Las que aún no tienen 7 días completos aparecen como «esperando».</div>`
+    : `<div class="note">Todavía ninguna decisión aceptada tiene 7 días completos de datos por detrás. En cuanto los tenga, esta línea dirá cuántas recomendaciones del panel mejoraron de verdad el resultado.</div>`;
+}
+function diagnostico(C){
+  const T=document.getElementById('t-diag');
+  const L=C.filter(c=>c.k!==SIN).sort((a,b)=>TIER[a.d.tier].n-TIER[b.d.tier].n||b.gasto-a.gasto);
+  T.querySelector('thead').innerHTML='<tr><th>Conjunto</th><th>Estado</th><th>Tipster</th><th>Inversión</th><th>Leads</th><th>Entradas</th>'+
+    (HAYPEND?'<th>Pendientes</th>':'')+'<th>Lead→Entr.</th><th>CPL</th>'+(HAYPEND?'<th>CPL ajust.</th>':'')+
+    '<th>Objetivo</th><th>Índice</th><th>Pagadores</th><th>Fase</th><th>Acción</th></tr>';
+  T.querySelector('tbody').innerHTML=L.map(c=>{
+    const T_=c.objetivo.v,idx=T_&&c.cpl?c.cpl/T_:null;
+    return `<tr class="${c.est.activo?'':'off'}">
+    <td class="nm"><span class="link" data-goad="${esc(c.k)}">${esc(c.k)}</span></td>
+    <td><span class="chip ${c.est.chip}">${esc(c.est.txt)}</span></td>
+    <td><span class="dot" style="background:${TC[c.tipster]||'#999'}"></span>${esc(c.tipster)}</td>
+    <td>${ef(c.gasto)}</td><td>${nf(c.leads)}</td><td>${nf(c.entradas)}</td>
+    ${HAYPEND?`<td>${c.pend?'<span class="neg">'+nf(c.pend)+'</span>':'—'}</td>`:''}
+    <td>${c.l2e===null?'—':pf(c.l2e)}</td><td>${c.cpl===null?'—':ef(c.cpl)}</td>
+    ${HAYPEND?`<td>${c.pend&&c.cplaj?ef(c.cplaj):'—'}</td>`:''}
+    <td>${T_?ef(T_)+(c.objetivo.fuente==='mediana'?'<span class="tag">med</span>':''):'—'}</td>
+    <td>${idx?'<span class="'+(idx<=1?'pos':'neg')+'">'+idx.toFixed(2)+'×</span>':'—'}</td>
+    <td>${nf(c.pagadores)}</td><td>${c.d.fase}</td>
+    <td><span class="badge ${c.d.badge}" style="min-width:0;padding:3px 8px;font-size:10px">${c.d.accion}</span></td></tr>`}).join('');
+  T.querySelectorAll('[data-goad]').forEach(e=>e.onclick=()=>{ST.conj=e.dataset.goad;syncFiltros();setTab(2);render()});
+}
+
+/* ═══════════════════ PESTAÑA · RENDIMIENTO ═══════════════════ */
+function kpis(rows,prev){
+  const a=met(sum(rows)),b=met(sum(prev));
+  const it=[['Inversión',a.gasto,b.gasto,ef,0],['Entradas',a.entradas,b.entradas,nf,1],['CPL',a.cpl,b.cpl,ef,-1],
+    ['Leads',a.leads,b.leads,nf,1],['Lead→Entrada',a.l2e,b.l2e,pf,1],['CTR',a.ctr,b.ctr,pf,1],
+    ['CPC',a.cpc,b.cpc,ef,-1],['Pagadores',a.pagadores,b.pagadores,nf,1]];
+  document.getElementById('kpis').innerHTML=it.map(([lb,v,p,fmt,dir])=>{
+    const d=(p&&isFinite(p)&&p!==0&&isFinite(v))?(v/p-1)*100:null;
+    const cls=d===null?'fl':(Math.abs(d)<2?'fl':((d>0?1:-1)===dir?'up':'dn'));
+    return `<div class="kpi"><div class="lb">${lb}</div><div class="vl">${v===null?'—':fmt(v)}</div>
+      <div class="dl ${cls}">${d===null?'sin comparativa':(d>=0?'↑ ':'↓ ')+Math.abs(d).toFixed(0)+'%'}</div></div>`}).join('');
+}
+function tablaConj(C,rows){
+  const T=document.getElementById('t-conj');
+  const cols=[['k','Conjunto'],['estado','Estado'],['accion','Acción'],['gasto','Inversión'],['impresiones','Impr.'],['clics','Clics'],['ctr','CTR'],
+    ['leads','Leads'],['c2l','Clic→Lead'],['entradas','Entradas']]
+    .concat(HAYPEND?[['pend','Pendientes']]:[])
+    .concat([['l2e','Lead→Entr.'],['cpl','CPL']])
+    .concat(HAYPEND?[['cplaj','CPL ajust.']]:[])
+    .concat([['obj','Objetivo'],['idx','Índice'],['pagadores','Pagadores'],['ingresos','Ingresos'],['roas','ROAS']]);
+  let data=C.map(c=>({...c,obj:c.objetivo?c.objetivo.v:null,idx:(c.objetivo&&c.objetivo.v&&c.cpl)?c.cpl/c.objetivo.v:null,
+    estado:c.est.txt,accion:c.d?c.d.accion:'—'}));
+  /* --- filtros operativos: la tabla contesta «qué toco», no sólo «qué pasó» --- */
+  const p75=(()=>{const v=data.map(d=>d.gasto).sort((a,b)=>a-b);return v.length?v[Math.floor(v.length*0.75)]:0})();
+  const FILT=[['','Todos'],['acc','Necesita acción'],['esc','Candidatos a escalar'],['sob','Por encima del objetivo'],
+    ['gas','Inversión alta'],['poc','Pocos datos']];
+  document.getElementById('p-conj').innerHTML=FILT.map(([v,t])=>{
+    const n=v?data.filter(d=>conjPasa(d,v,p75)).length:data.length;
+    return `<button class="pill${v===CONJF?' on':''}" data-cf="${v}">${t}${v?' · '+n:''}</button>`}).join('');
+  document.querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{CONJF=b.dataset.cf;render()});
+  const qc=document.getElementById('q-conj');
+  if(document.activeElement!==qc)qc.value=CONJQ;
+  qc.oninput=()=>{CONJQ=qc.value;render();document.getElementById('q-conj').focus()};
+  if(CONJF)data=data.filter(d=>conjPasa(d,CONJF,p75));
+  if(CONJQ.trim()){const t=CONJQ.trim().toLowerCase();
+    data=data.filter(d=>(d.k+' '+(d.tipster||'')+' '+(d.pais||'')).toLowerCase().includes(t))}
+  const vis=new Set(data.map(d=>d.k));
+  rows=rows.filter(r=>vis.has(r.grupo));
+  const s=SORT.conj,dr=DIR.conj;
+  data.sort((a,b)=>{if(a.k===SIN)return 1;if(b.k===SIN)return -1;
+    return typeof a[s]==='string'?dr*String(a[s]).localeCompare(b[s]):dr*((a[s]||0)-(b[s]||0))});
+  const tot=met(sum(rows));
+  const mx={};['gasto','entradas','impresiones'].forEach(k=>mx[k]=Math.max(...data.map(x=>x[k]||0)));
+  T.querySelector('thead').innerHTML='<tr>'+cols.map(c=>`<th data-k="${c[0]}">${c[1]}${s===c[0]?(dr<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
+  const FM=(c,v)=>{if(['gasto','cpl','ingresos','obj','cplaj'].includes(c))return v===null||v===undefined?'—':ef(v);
+    if(['ctr','l2e','c2l'].includes(c))return v===null||v===undefined?'—':pf(v);if(c==='roas')return v===null?'—':xf(v);
+    if(c==='idx')return v?v.toFixed(2)+'×':'—';return nf(v)};
+  T.querySelector('tbody').innerHTML=data.map(d=>'<tr class="'+(d.k===SIN?'sin':(d.est.activo?'':'off'))+'">'+cols.map(c=>{
+    if(c[0]==='k')return `<td class="nm">${!ST.tip?'<span class="dot" style="background:'+(TC[d.tipster]||'#999')+'"></span>':''}<span class="link" data-goad="${esc(d.k)}">${esc(d.k)}</span></td>`;
+    if(c[0]==='estado')return `<td><span class="chip ${d.est.chip}">${esc(d.est.txt)}</span></td>`;
+    if(c[0]==='accion')return `<td>${d.d?'<span class="badge '+d.d.badge+'" style="min-width:0;padding:3px 8px;font-size:10px">'+esc(d.d.accion)+'</span>':'—'}</td>`;
+    let v=FM(c[0],d[c[0]]);
+    if(mx[c[0]])v=`<span class="heat" style="${heat(d[c[0]],mx[c[0]],'127,219,232')}">${v}</span>`;
+    if(c[0]==='idx'&&d.idx)v=`<span class="${d.idx<=1?'pos':'neg'}">${d.idx.toFixed(2)}×</span>`;
+    if(c[0]==='roas'&&d.roas!==null)v=`<span class="${d.roas>=1?'pos':'neg'}">${xf(d.roas)}</span>`;
+    return `<td>${v}</td>`}).join('')+'</tr>').join('');
+  T.querySelector('tfoot').innerHTML='<tr>'+cols.map(c=>c[0]==='k'?`<td>TOTAL (${data.length})</td>`:
+    (['estado','obj','idx','accion'].includes(c[0])?'<td>—</td>':
+     (c[0]==='pend'?`<td>${nf(data.reduce((a,d)=>a+(d.pend||0),0))}</td>`:
+     (c[0]==='cplaj'?`<td>${(()=>{const pe=data.reduce((a,d)=>a+(d.pend||0),0);const v=dv(tot.gasto,tot.entradas+pe);return v?ef(v):'—'})()}</td>`:
+      `<td>${FM(c[0],tot[c[0]])}</td>`)))).join('')+'</tr>';
+  T.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;
+    if(k===SORT.conj)DIR.conj*=-1;else{SORT.conj=k;DIR.conj=-1}render()});
+  T.querySelectorAll('[data-goad]').forEach(e=>e.onclick=ev=>{ev.stopPropagation();ST.conj=e.dataset.goad;syncFiltros();setTab(2);render()});
+}
+function conjPasa(d,f,p75){
+  if(!d.d)return f==='';
+  if(f==='acc')return d.d.tier==='AHORA'||d.d.tier==='REVISAR';
+  if(f==='esc')return d.d.tier==='OPORT';
+  if(f==='sob')return d.idx!==null&&d.idx>1;
+  if(f==='gas')return d.gasto>=p75&&d.gasto>0;
+  if(f==='poc')return d.entradas<CFG.umbral.entradas_min||d.gasto<CFG.umbral.gasto_min_eur;
+  return true;
+}
+function liga(rows){
+  let L=grp(rows,'tipster');
+  const T=document.getElementById('t-liga');
+  const cols=[['k','Tipster'],['gasto','Inversión'],['impresiones','Impr.'],['clics','Clics'],['ctr','CTR'],['leads','Leads'],
+    ['c2l','Clic→Lead'],['entradas','Entradas']]
+    .concat(HAYPEND?[['pend','Pendientes'],['aprob','Tasa aprob.']]:[])
+    .concat([['l2e','Lead→Entr.'],['cpl','CPL']])
+    .concat(HAYPEND?[['cplaj','CPL ajust.']]:[])
+    .concat([['pagadores','Pagadores'],['tasa','Entrada→Pago'],['ingresos','Ingresos'],['ing_ent','Ingreso/entrada'],['roas','ROAS']]);
+  const MIN=CFG.umbral.entradas_min;
+  L=L.map(d=>{const q=PT[d.k]||{pend:0,sol:0,vida:0};
+    return{...d,pend:q.pend,aprob:q.sol?q.vida/q.sol*100:null,
+      cplaj:q.pend?dv(d.gasto,d.entradas+q.pend):null}});
+  const s=SORT.liga,dr=DIR.liga;
+  L.sort((a,b)=>typeof a[s]==='string'?dr*String(a[s]).localeCompare(b[s]):dr*((a[s]||0)-(b[s]||0)));
+  const tot=met(sum(rows));
+  T.querySelector('thead').innerHTML='<tr>'+cols.map(c=>`<th data-k="${c[0]}">${c[1]}${s===c[0]?(dr<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
+  const FM=(c,v)=>{if(['gasto','cpl','ingresos','ing_ent','cplaj'].includes(c))return v===null||v===undefined||!isFinite(v)?'—':ef(v);
+    if(['ctr','l2e','c2l','tasa','aprob'].includes(c))return v===null||v===undefined?'—':pf(v);if(c==='roas')return v===null?'—':xf(v);return nf(v)};
+  T.querySelector('tbody').innerHTML=L.map(d=>'<tr class="'+(d.entradas<MIN?'lowdata':'')+'">'+cols.map(c=>c[0]==='k'
+    ?`<td class="nm"><span class="dot" style="background:${TC[d.k]||'#999'}"></span>${esc(d.k)}${d.entradas<MIN?' <span class="chip ch-dor">muestra baja</span>':''}</td>`
+    :`<td>${c[0]==='roas'&&d.roas!==null?'<span class="'+(d.roas>=1?'pos':'neg')+'">'+xf(d.roas)+'</span>':FM(c[0],d[c[0]])}</td>`).join('')+'</tr>').join('');
+  const totPend=L.reduce((a,d)=>a+(d.pend||0),0);
+  T.querySelector('tfoot').innerHTML='<tr>'+cols.map(c=>c[0]==='k'?'<td>TOTAL</td>':
+    (c[0]==='pend'?`<td>${nf(totPend)}</td>`:
+    (c[0]==='cplaj'?`<td>${totPend?ef(dv(tot.gasto,tot.entradas+totPend)):'—'}</td>`:
+    (c[0]==='aprob'?'<td>—</td>':`<td>${FM(c[0],tot[c[0]])}</td>`)))).join('')+'</tr>';
+  T.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;
+    if(k===SORT.liga)DIR.liga*=-1;else{SORT.liga=k;DIR.liga=-1}render()});
+  const flojos=L.filter(d=>d.entradas<MIN);
+  document.getElementById('liga-note').innerHTML=
+    `Aquí no hay una nota global ni un ganador único: <b>ordena por la columna que te importe</b> —CPL para captación, Lead→Entrada para el paso a Telegram, Entrada→Pago o Ingreso/entrada para monetización— porque el mejor en una casi nunca es el mejor en todas. `+
+    (HAYPEND?`<b>Pendientes</b> es la cola de aprobación de PremiumPay${PENDF?' a '+esc(PENDF):''}: solicitudes que aún no son entradas. Son totales <b>de por vida del enlace</b>, no del periodo, así que el <b>CPL ajustado</b> —inversión entre entradas más pendientes— es el escenario «si se aprobara toda la cola», un suelo orientativo, no una medición. `:'')+
+    (flojos.length?`<b>${flojos.length} con muestra baja</b> (${flojos.map(d=>esc(d.k)).join(', ')}): menos de ${MIN} entradas en la ventana, sus ratios son ruido y no deberían ordenar nada.`:`Todos superan las ${MIN} entradas mínimas, así que los ratios son comparables entre sí.`);
+}
+/* Los cuatro cuadrantes se dibujan sobre las medianas del propio periodo: un conjunto es
+   «caro» respecto a los demás de ahora, no respecto a un número inventado. */
+const quadPlug={id:'quad',beforeDatasetsDraw(c){
+  if(!MAPAQ)return;const{ctx,chartArea:CA,scales}=c;
+  const x=scales.x.getPixelForValue(MAPAQ.mx),y=scales.y.getPixelForValue(MAPAQ.my);
+  ctx.save();
+  ctx.fillStyle='rgba(24,138,85,.045)';ctx.fillRect(CA.left,CA.top,x-CA.left,y-CA.top);
+  ctx.fillStyle='rgba(200,53,58,.045)';ctx.fillRect(x,y,CA.right-x,CA.bottom-y);
+  ctx.setLineDash([5,4]);ctx.strokeStyle='#c8d2e2';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x,CA.top);ctx.lineTo(x,CA.bottom);ctx.moveTo(CA.left,y);ctx.lineTo(CA.right,y);ctx.stroke();
+  ctx.restore();
+},
+/* las etiquetas van encima de las burbujas, con halo, o no se leen */
+afterDatasetsDraw(c){
+  if(!MAPAQ)return;const{ctx,chartArea:CA}=c;
+  ctx.save();ctx.font='800 10px -apple-system,Segoe UI,sans-serif';
+  ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=4;ctx.lineJoin='round';
+  const put=(t,px,py,al,bl)=>{ctx.textAlign=al;ctx.textBaseline=bl;
+    ctx.strokeText(t,px,py);ctx.fillStyle='#66788f';ctx.fillText(t,px,py)};
+  put('ESCALAR · barato y rentable',CA.left+8,CA.top+6,'left','top');
+  put('OPTIMIZAR · caro pero rentable',CA.right-8,CA.top+6,'right','top');
+  put('ARREGLAR MONETIZACIÓN · barato, no paga',CA.left+8,CA.bottom-6,'left','bottom');
+  put('PAUSAR · caro y no paga',CA.right-8,CA.bottom-6,'right','bottom');
+  ctx.restore();
+}};
+function mapa(C){
+  const MIN=CFG.umbral.entradas_min;
+  const pts=C.filter(c=>c.k!==SIN&&c.gasto>0&&c.entradas>0).map(c=>({x:c.cpl,y:c.ing_ent||0,r:Math.max(5,Math.min(26,Math.sqrt(c.gasto)*2)),
+    label:c.k,gasto:c.gasto,entradas:c.entradas,ingresos:c.ingresos,pagadores:c.pagadores,
+    bajo:c.entradas<MIN,bg:TC[c.tipster]||'#999'}));
+  MAPAQ=pts.length>1?{mx:medi(pts.map(p=>p.x)),my:medi(pts.map(p=>p.y))}:null;
+  /* un par de conjuntos con CPL de 40 € aplastan a los demás contra el eje:
+     la escala se corta en el percentil 90 y lo que queda fuera se dibuja en el borde */
+  const p90=a=>{const v=a.slice().sort((x,y)=>x-y);return v.length?v[Math.min(v.length-1,Math.floor(v.length*0.9))]:1};
+  const XM=Math.max(0.5,p90(pts.map(p=>p.x))*1.15), YM=Math.max(0.5,p90(pts.map(p=>p.y))*1.15);
+  let fuera=0;
+  pts.forEach(p=>{p.xr=p.x;p.yr=p.y;
+    if(p.x>XM){p.x=XM;p.fuera=true}if(p.y>YM){p.y=YM;p.fuera=true}
+    if(p.fuera)fuera++});
+  const mx=Math.min(XM,YM);
+  draw('c-mapa','bubble',{datasets:[{data:pts,backgroundColor:pts.map(p=>p.bg+(p.bajo?'44':'bb')),
+      borderColor:pts.map(p=>p.bajo?p.bg+'88':'transparent'),borderWidth:1.5},
+    {type:'line',data:[{x:0,y:0},{x:mx,y:mx}],borderColor:'#c8d2e2',borderDash:[6,5],pointRadius:0,fill:false}]},
+    {plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const r=c.raw;if(!r.label)return '';
+      return [r.label+(r.fuera?' · fuera de escala':''),'CPL '+ef(r.xr)+' · ingreso/entrada '+ef(r.yr),
+        ef(r.gasto)+' invertidos · '+nf(r.entradas)+' entradas · '+nf(r.pagadores)+' pagadores',
+        r.bajo?'Muestra baja: menos de '+MIN+' entradas':'Muestra suficiente']}}}},
+     scales:{x:{min:0,max:XM,title:{display:true,text:'Coste por entrada (€)'}},
+             y:{min:0,max:YM,title:{display:true,text:'Ingreso por entrada (€)'}}}},[quadPlug]);
+  document.getElementById('mapa-note').innerHTML=
+    `Las líneas discontinuas son las <b>medianas del periodo</b>: cada conjunto se juzga contra los demás de ahora, no contra un número fijo. Por encima de la diagonal devuelve más de lo que cuesta. El tamaño de la burbuja es la inversión y las burbujas huecas tienen menos de ${CFG.umbral.entradas_min} entradas.`+
+    (fuera?` <b>${fuera} conjuntos quedan fuera de escala</b> y se dibujan pegados al borde para no aplastar al resto; pasa el ratón por encima para ver su valor real.`:'');
+}
+function retencion(){
+  const ts=ST.tip?[ST.tip]:TIPS;
+  const ds=ts.map(t=>({label:t,data:RET.filter(r=>r.tipster===t).map(r=>r.pct),borderColor:TC[t],
+    backgroundColor:'transparent',tension:.3,pointRadius:3}));
+  const lb=[...new Set(RET.map(r=>r.dias))].sort((a,b)=>a-b).map(d=>d<1?d*24+' h':d+' d');
+  draw('c-ret','line',{labels:lb,datasets:ds},{plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}},
+    scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}}}});
+}
+function diario(rows){
+  const dias=[...new Set(rows.map(r=>r.dia))].sort();
+  const ts=ST.tip?[ST.tip]:TIPS;
+  const ds=ts.map(t=>({label:t,type:'bar',data:dias.map(d=>rows.filter(r=>r.dia===d&&r.tipster===t).reduce((a,r)=>a+r.entradas,0)),
+    backgroundColor:TC[t],stack:'e',yAxisID:'y',order:2}));
+  /* order:0 = se dibuja el ultimo => la linea queda POR DELANTE de las barras (Chart.js v4) */
+  ds.push({label:'CPL del día',type:'line',data:dias.map(d=>{const m=met(sum(rows.filter(r=>r.dia===d)));return m.cpl}),
+    borderColor:'#c8353a55',backgroundColor:'transparent',yAxisID:'y1',tension:.25,
+    borderWidth:1.5,pointRadius:2,pointBackgroundColor:'#c8353a55',pointBorderColor:'#fff',pointBorderWidth:1,
+    spanGaps:true,order:1,z:9});
+  /* media móvil de 7 días sobre los sumandos (gasto y entradas), no sobre el CPL diario:
+     el 65% de los enlaces son de aprobación manual y el dato de un día suelto salta por lotes */
+  ds.push({label:'CPL · media 7 días',type:'line',data:dias.map((d,i)=>{
+      const a=dias[Math.max(0,i-6)];const m=met(sum(rows.filter(r=>r.dia>=a&&r.dia<=d)));return m.cpl}),
+    borderColor:'#c8353a',backgroundColor:'transparent',yAxisID:'y1',tension:.3,
+    borderWidth:3,pointRadius:0,spanGaps:true,order:0,z:10});
+  draw('c-dia','bar',{labels:dias,datasets:ds},{plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}},
+    scales:{y:{stacked:true,title:{display:true,text:'Entradas'}},
+      y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'CPL (€)'}},x:{stacked:true}}});
+}
+function draw(id,type,data,opts,plugins){
+  if(ch[id])ch[id].destroy();
+  ch[id]=new Chart(document.getElementById(id),{type,data,plugins:plugins||[],options:{responsive:true,maintainAspectRatio:false,
+    animation:{duration:matchMedia('(prefers-reduced-motion:reduce)').matches?0:400},...opts}});
+}
+/* mediana simple, ignorando nulos */
+function medi(v){const a=v.filter(x=>x!==null&&isFinite(x)).sort((x,y)=>x-y);
+  if(!a.length)return null;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2}
+
+/* ═══════════════════ PESTAÑA · CONJUNTO ═══════════════════ */
+function ficha(){
+  const on=!!ST.conj;
+  document.getElementById('ad-empty').style.display=on?'none':'';
+  document.getElementById('ad-body').style.display=on?'':'none';
+  if(!on)return;
+  const g=ST.conj;
+  const todo=D.filter(r=>r.grupo===g);
+  const est=estadoDe(g),m=MG[g]||{};
+  const r0=todo[0]||{};
+  const ventana=(a,b)=>met(sum(todo.filter(r=>r.dia>=a&&r.dia<=b)));
+  const ult=D_MAX;
+  const V={hoy:ventana(ult,ult),d7:ventana(addD(ult,-6),ult),d30:ventana(addD(ult,-29),ult),sel:ventana(ST.from,ST.to)};
+  const C=tarjetas(rowsBase());
+  const card=C.find(c=>c.k===g)||{objetivo:objetivoCPL(r0.tipster,r0.pais,medianaActivos(C))};
+  const T=card.objetivo.v;
+
+  document.getElementById('ad-h').textContent=g;
+  document.getElementById('ad-sub').innerHTML=`${esc(r0.tipster||'')} · ${esc(r0.pais||'—')} · <span class="chip ${est.chip}">${esc(est.txt)}</span>`;
+  document.getElementById('ad-meta').innerHTML=
+    (m.campana&&m.campana.length?`<span class="pill">Campaña: ${esc(m.campana.join(', '))}</span>`:'')+
+    (m.anuncios?`<span class="pill">${m.anuncios} anuncios</span>`:'')+
+    (m.rechazados&&m.rechazados.length?`<span class="pill" style="background:#f6e4e5;border-color:#e0b6b8;color:#8e2226;font-weight:700">${m.rechazados.length} rechazados por Meta</span>`:'')+
+    (m.adsets&&m.adsets.length>1?`<span class="pill">${m.adsets.length} conjuntos con esta clave</span>`:'')+
+    (m.frecuencia?`<span class="pill">Frecuencia máx. ${m.frecuencia.toFixed(2)}×</span>`:'')+
+    ((PG[g]&&PG[g].pend)?`<span class="pill" style="background:#fdf0dc;border-color:#e8cfa4;color:#8a5a00;font-weight:700">${nf(PG[g].pend)} sin aprobar</span>`:'')+
+    `<button class="pill" id="ad-clear">Quitar filtro</button>`;
+  document.getElementById('ad-clear').onclick=()=>{ST.conj='';syncFiltros();render()};
+
+  const filas=[['Inversión','gasto',ef,null],['Impresiones','impresiones',nf,null],['CPM','cpm',ef,null],
+    ['CTR','ctr',pf,null],['Clics','clics',nf,null],['CPC','cpc',ef,null],['Leads','leads',nf,null],
+    ['Coste/lead Meta','cplm',ef,null],['Entradas','entradas',nf,null],['Lead→Entrada','l2e',pf,null],
+    ['CPL (coste por entrada)','cpl',ef,T],['Pagadores','pagadores',nf,null],['Ingresos','ingresos',ef,null],['ROAS','roas',xf,null]];
+  const S=document.getElementById('ad-sc');
+  S.querySelector('thead').innerHTML=`<tr><th>Métrica</th><th>Último día</th><th>7 días</th><th>30 días</th><th>Periodo filtrado</th><th>Objetivo</th></tr>`;
+  S.querySelector('tbody').innerHTML=filas.map(([lb,k,fmt,obj])=>{
+    const cell=v=>v===null||v===undefined||!isFinite(v)?'—':fmt(v);
+    let objc='—';
+    if(obj){const idx=V.sel[k]?V.sel[k]/obj:null;
+      objc=`${ef(obj)} ${idx?'<span class="'+(idx<=1?'pos':'neg')+'">'+idx.toFixed(2)+'×</span>':''}`}
+    return `<tr><td>${lb}</td><td>${cell(V.hoy[k])}</td><td>${cell(V.d7[k])}</td><td>${cell(V.d30[k])}</td>
+      <td><b>${cell(V.sel[k])}</b></td><td>${objc}</td></tr>`}).join('');
+  const _q=PG[g];
+  document.getElementById('ad-note').innerHTML=
+    `Las columnas de 7 y 30 días se cuentan hacia atrás desde <b>${ult}</b>, el último día con datos, y no dependen del filtro de fechas. La columna «Periodo filtrado» sí. `+
+    ((_q&&_q.pend)?`<br><b>${nf(_q.pend)} solicitudes sin aprobar</b> en la cola de PremiumPay${PENDF?' ('+esc(PENDF)+')':''}: si se aprobaran todas, el CPL del periodo pasaría de <b>${ef(V.sel.cpl)}</b> a <b>${ef(dv(V.sel.gasto,V.sel.entradas+_q.pend))}</b>. Tasa de aprobación histórica del enlace: ${_q.sol?pf(_q.vida/_q.sol*100):'—'}. Los pendientes no tienen fecha, así que no entran en la tabla diaria ni en el CPL: este número es un escenario, no una medición. `:'')+
+    (card.d?`Decisión actual: <b>${esc(card.d.accion)}</b> — ${esc(card.d.causa)}, ${esc(card.d.motivo)}.`:'')+
+    (est.nota?` Nota del equipo: «${esc(est.nota)}»${est.owner?' — '+esc(est.owner):''}.`:'')+
+    (m.rechazados&&m.rechazados.length?`<br><b>Anuncios rechazados por Meta:</b> ${m.rechazados.map(esc).join(', ')}. Mientras sigan rechazados el conjunto entrega peor: no interpretes el CPL como un problema de audiencia o de puja.`:'');
+
+  // gráfico y tabla diaria del conjunto
+  const dias=[];for(let d=ST.from;d<=ST.to;d=addD(d,1))dias.push(d);
+  const porDia=d=>met(sum(todo.filter(r=>r.dia===d)));
+  const M=dias.map(porDia);
+  const ds=[{label:'Inversión (€)',type:'bar',data:M.map(x=>x.gasto),backgroundColor:'#3d63b0aa',yAxisID:'y',order:3},
+    {label:'Entradas',type:'bar',data:M.map(x=>x.entradas),backgroundColor:'#22b573aa',yAxisID:'y',order:3},
+    {label:'CPL (€)',type:'line',data:M.map(x=>x.cpl),borderColor:'#c8353a',backgroundColor:'transparent',
+      yAxisID:'y1',tension:.25,borderWidth:3,pointRadius:3,pointBackgroundColor:'#c8353a',
+      pointBorderColor:'#fff',pointBorderWidth:1.5,spanGaps:true,order:0,z:10}];
+  if(T)ds.push({label:'CPL objetivo',type:'line',data:dias.map(()=>T),borderColor:'#8fa0ba',borderDash:[6,4],
+    pointRadius:0,yAxisID:'y1',fill:false,order:1,z:9});
+  draw('c-ad','bar',{labels:dias,datasets:ds},{plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}},
+    scales:{y:{title:{display:true,text:'Inversión / entradas'}},
+      y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'CPL (€)'}}}});
+
+  const TD=document.getElementById('t-addia');
+  const cols=[['dia','Fecha'],['gasto','Inversión'],['impresiones','Impr.'],['clics','Clics'],['ctr','CTR'],['cpc','CPC'],
+    ['leads','Leads'],['entradas','Entradas'],['l2e','Lead→Entr.'],['cpl','CPL'],['idx','vs objetivo'],['pagadores','Pagadores'],['ingresos','Ingresos']];
+  let filasD=dias.map((d,i)=>({dia:d,...M[i],idx:(T&&M[i].cpl)?M[i].cpl/T:null})).filter(r=>r.gasto>0||r.entradas>0);
+  const s=SORT.addia,dr=DIR.addia;
+  filasD.sort((a,b)=>typeof a[s]==='string'?dr*String(a[s]).localeCompare(b[s]):dr*((a[s]||0)-(b[s]||0)));
+  TD.querySelector('thead').innerHTML='<tr>'+cols.map(c=>`<th data-k="${c[0]}">${c[1]}${s===c[0]?(dr<0?' ▼':' ▲'):''}</th>`).join('')+'</tr>';
+  const FM=(c,v)=>{if(['gasto','cpl','ingresos','cpc'].includes(c))return v===null||!isFinite(v)?'—':ef(v);
+    if(['ctr','l2e'].includes(c))return v===null||!isFinite(v)?'—':pf(v);
+    if(c==='idx')return v?`<span class="${v<=1?'pos':'neg'}">${v.toFixed(2)}×</span>`:'—';return nf(v)};
+  TD.querySelector('tbody').innerHTML=filasD.length?filasD.map(r=>'<tr>'+cols.map(c=>
+    c[0]==='dia'?`<td>${r.dia}</td>`:`<td>${FM(c[0],r[c[0]])}</td>`).join('')+'</tr>').join('')
+    :'<tr><td colspan="13" style="text-align:center;font-weight:400;color:#6b7a90">Sin inversión ni entradas en el periodo seleccionado.</td></tr>';
+  const tt=met(sum(todo.filter(r=>r.dia>=ST.from&&r.dia<=ST.to)));
+  TD.querySelector('tfoot').innerHTML='<tr>'+cols.map(c=>c[0]==='dia'?`<td>TOTAL (${filasD.length} días)</td>`:
+    (c[0]==='idx'?`<td>${T&&tt.cpl?(tt.cpl/T).toFixed(2)+'×':'—'}</td>`:`<td>${FM(c[0],tt[c[0]])}</td>`)).join('')+'</tr>';
+  TD.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;
+    if(k===SORT.addia)DIR.addia*=-1;else{SORT.addia=k;DIR.addia=1}render()});
+}
+
+/* ═══════════════════ PESTAÑA · EMBUDO ═══════════════════ */
+/* Los cuatro saltos del embudo, en el orden en que se pierde gente.
+   Cada uno tiene su propia mediana entre conjuntos: comparar un CTR del 2% con una
+   conversión a canal del 60% no dice nada, comparar cada salto con su propia mediana sí. */
+const PASOS=[['ctr','CTR','Impresión → Clic',['clics','impresiones'],1000],
+             ['c2l','Clic → Lead','Landing / formulario',['leads','clics'],50],
+             ['l2e','Lead → Entrada','Enlace de invitación y paso a Telegram',['entradas','leads'],10],
+             ['tasa','Entrada → Pago','Contenido, oferta y precio',['pagadores','entradas'],20]];
+function benchFun(){
+  const rows=D.filter(r=>r.dia>=ST.from&&r.dia<=ST.to&&r.grupo!==SIN);
+  const G=grp(rows,'grupo'), o={};
+  PASOS.forEach(([k,,,dd,minDen])=>{
+    o[k]=medi(G.filter(g=>(g[dd[1]]||0)>=minDen).map(g=>g[k]));
+  });
+  return o;
+}
+function embudo(m){
+  const B=benchFun();
+  /* ---- cadena visual con el % entre cada métrica ---- */
+  const paso=PASOS.map(([k,lb,expl])=>{
+    const v=m[k], b=B[k], idx=(v!==null&&b)?v/b:null;
+    return{k,lb,expl,v,b,idx}});
+  const peor=paso.filter(p=>p.idx!==null).sort((a,b)=>a.idx-b.idx)[0];
+  const ET=[['Impresiones',m.impresiones,null],['Clics',m.clics,m.cpc],['Leads',m.leads,m.cplm],
+            ['Entradas',m.entradas,m.cpl],['Pagadores',m.pagadores,dv(m.gasto,m.pagadores)]];
+  let h='';
+  ET.forEach((e,i)=>{
+    if(i){const p=paso[i-1],mal=peor&&p.k===peor.k&&p.idx<0.8;
+      h+=`<div class="ar${mal?' worst':''}">${p.v===null?'—':pf(p.v)}<small>${esc(p.lb)}</small>`+
+         `<small style="text-transform:none;letter-spacing:0;font-weight:600">${p.b?'mediana '+pf(p.b):''}</small></div>`}
+    const mal=peor&&i&&paso[i-1].k===peor.k&&paso[i-1].idx<0.8;
+    h+=`<div class="st${mal?' worst':''}"><div class="lb">${e[0]}</div><div class="vl">${nf(e[1])}</div>
+        <div class="sub">${e[2]?ef(e[2])+' cada uno':'&nbsp;'}</div></div>`;
+  });
+  document.getElementById('fun-chain').innerHTML=h;
+  document.getElementById('fun-worst').innerHTML=(peor&&peor.idx<0.8)
+    ?`<b>El cuello de botella está en «${esc(peor.lb)}»</b>: ${pf(peor.v)} frente a una mediana de ${pf(peor.b)} entre conjuntos (${Math.round((1-peor.idx)*100)}% peor). ${esc(peor.expl)} es lo que hay que mirar antes de tocar la puja o el presupuesto.`
+    :'Ningún salto del embudo se desvía más de un 20% de la mediana entre conjuntos: el problema, si lo hay, no está en una etapa concreta sino en el coste de captación.';
+
+  /* ---- tabla detallada, incluida la landing ---- */
+  const F_=[['Impresiones',m.impresiones,'Meta'],['Clics en el enlace',m.clics,'Meta'],['Visitas a la landing',m.lpv,'Meta'],
+    ['Leads',m.leads,'Meta'],['Entradas al canal',m.entradas,'PremiumPay'],
+    ['Siguen dentro',m.entradas-m.bajas,'PremiumPay'],['Pagadores',m.pagadores,'PremiumPay'],['Pagos',m.pagos,'PremiumPay']];
+  const T=document.getElementById('t-fun');
+  T.querySelector('thead').innerHTML='<tr><th>Etapa</th><th>Origen</th><th>Volumen</th><th>% de la etapa anterior</th><th>Se pierden</th><th>% de impresiones</th><th>Coste unitario</th></tr>';
+  T.querySelector('tbody').innerHTML=F_.map((f,i)=>{
+    const prev=i?F_[i-1][1]:null, r=prev?pc(f[1],prev):null;
+    return `<tr><td>${f[0]}</td><td>${f[2]}</td><td>${nf(f[1])}</td>
+      <td>${r===null?'—':pf(r)}</td><td>${(prev&&prev>f[1])?nf(prev-f[1]):'—'}</td><td>${pf(pc(f[1],m.impresiones))}</td>
+      <td>${i===0?ef(m.cpm)+' CPM':(f[1]?ef(dv(m.gasto,f[1])):'—')}</td></tr>`}).join('');
+  embudoLinea();
+}
+/* embudo desglosado por tipster / conjunto / país, con el % entre cada métrica */
+function embudoLinea(){
+  document.getElementById('fun-grp').innerHTML=[['tipster','Tipster'],['grupo','Conjunto'],['pais','País']]
+    .map(([v,t])=>`<button class="pill${v===FUNG?' on':''}" data-fg="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-fg]').forEach(b=>b.onclick=()=>{FUNG=b.dataset.fg;render()});
+  const q=document.getElementById('fun-q');q.value=FUNQ;
+  q.oninput=()=>{FUNQ=q.value;embudoLinea()};
+
+  const rows=D.filter(r=>r.dia>=ST.from&&r.dia<=ST.to&&(!ST.tip||r.tipster===ST.tip)&&(!ST.pais||r.pais===ST.pais));
+  let L=grp(rows,FUNG).filter(x=>x.k&&x.k!=='undefined');
+  if(FUNQ.trim())L=L.filter(x=>String(x.k).toLowerCase().includes(FUNQ.trim().toLowerCase()));
+  L.sort((a,b)=>b.gasto-a.gasto);
+  const min={ctr:1000,c2l:50,l2e:10,tasa:20};
+  const bajo=x=>x.clics<50||x.leads<10;
+  const cols=[['k',FUNG==='tipster'?'Tipster':(FUNG==='grupo'?'Conjunto':'País')],['gasto','Inversión'],
+    ['impresiones','Impresiones'],['ctr','CTR'],['clics','Clics'],['c2l','Clic→Lead'],['leads','Leads'],
+    ['l2e','Lead→Entrada'],['entradas','Entradas'],['cpl','CPL'],['tasa','Entrada→Pago'],['pagadores','Pagadores'],['ing_ent','Ingreso/entrada']];
+  const T=document.getElementById('t-fun2');
+  T.querySelector('thead').innerHTML='<tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>';
+  /* peor valor de cada columna de conversión, sólo entre líneas con muestra */
+  const conv=['ctr','c2l','l2e','tasa'],peor={};
+  conv.forEach(k=>{const v=L.filter(x=>!bajo(x)&&x[k]!==null).map(x=>x[k]);peor[k]=v.length?Math.min(...v):null});
+  const FM=(c,v)=>{if(['gasto','cpl','ing_ent'].includes(c))return v===null||!isFinite(v)?'—':ef(v);
+    if(conv.includes(c))return v===null?'—':pf(v);return nf(v)};
+  T.querySelector('tbody').innerHTML=L.map(d=>'<tr class="'+(bajo(d)?'lowdata':'')+'">'+cols.map(c=>{
+    if(c[0]==='k')return `<td class="nm">${FUNG!=='pais'?'<span class="dot" style="background:'+(TC[FUNG==='tipster'?d.k:d.tipster]||'#999')+'"></span>':''}${esc(d.k)}${bajo(d)?' <span class="chip ch-dor">muestra baja</span>':''}</td>`;
+    const v=FM(c[0],d[c[0]]);
+    if(conv.includes(c[0])&&peor[c[0]]!==null&&d[c[0]]===peor[c[0]]&&!bajo(d))return `<td class="worst">${v}</td>`;
+    return `<td>${v}</td>`}).join('')+'</tr>').join('')
+    ||'<tr><td colspan="13" style="text-align:center;font-weight:400;color:#6b7a90">Nada que mostrar con este filtro.</td></tr>';
+  const tot=met(sum(rows));
+  T.querySelector('tfoot').innerHTML='<tr>'+cols.map(c=>c[0]==='k'?`<td>TOTAL (${L.length})</td>`:`<td>${FM(c[0],tot[c[0]])}</td>`).join('')+'</tr>';
+}
+/* Meta manda la ubicación (Feed, Reels, Stories…) y la plataforma (Facebook, Instagram)
+   como dos desgloses distintos. Si el export sólo trae el de ubicación, «Feed» viene sumado
+   entre Facebook e Instagram y no hay forma de separarlo aquí: hay que añadir el desglose
+   de plataforma en Meta y regenerar data.json. Lo que sí se puede es agrupar por la
+   plataforma que ya delata la etiqueta (FB Reels, IG Stories…). */
+const PL_FB=new Set(['Marketplace','Right column','Búsqueda']);
+const PL_IG=new Set(['IG búsqueda']);
+const PL_AN=new Set(['Audience Network','Vídeo recompensado']);
+function plataformaDe(k){
+  if(/^FB[ ·]/.test(k)||PL_FB.has(k))return 'Facebook';
+  if(/^IG[ ·]/.test(k)||PL_IG.has(k))return 'Instagram';
+  if(PL_AN.has(k))return 'Audience Network';
+  return 'Sin desglosar';
+}
+function placement(){
+  document.getElementById('plac-vista').innerHTML=[['ubi','Por ubicación'],['plat','Por plataforma']]
+    .map(([v,t])=>`<button class="pill${v===PLACV?' on':''}" data-pv="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-pv]').forEach(b=>b.onclick=()=>{PLACV=b.dataset.pv;render()});
+  const rows=PLAC.filter(r=>r.dia>=ST.from&&r.dia<=ST.to&&(!ST.tip||r.tipster===ST.tip));
+  const o={};rows.forEach(r=>{const k=PLACV==='plat'?plataformaDe(r.placement):r.placement;
+    o[k]=o[k]||{k,gasto:0,impresiones:0,clics:0,lpv:0,leads:0};
+    o[k].gasto+=gEur(r);['impresiones','clics','lpv','leads'].forEach(x=>o[k][x]+=r[x]||0)});
+  /* aviso si el export todavía viene sin el desglose de plataforma */
+  const sinDes=rows.filter(r=>plataformaDe(r.placement)==='Sin desglosar');
+  const gSin=sinDes.reduce((a,r)=>a+gEur(r),0), gTot=rows.reduce((a,r)=>a+gEur(r),0);
+  document.getElementById('plac-aviso').innerHTML=(gSin>gTot*0.05)
+    ? `<div class="wm"><b>${ef(gSin)} (${(gSin/gTot*100).toFixed(0)}% de la inversión) no se puede repartir entre Facebook e Instagram.</b>
+       Son ubicaciones que Meta devuelve sin plataforma —sobre todo <code>Feed</code>, que suma el de Facebook y el de Instagram en una sola fila—.
+       Para separarlo hay que añadir el desglose <b>Platform</b> junto a <b>Placement</b> en el informe de Ads Reporting y volver a generar <code>data.json</code>;
+       a partir de ahí aparecerán <code>FB Feed</code> e <code>IG Feed</code> por separado. Está detallado en el RUNBOOK, paso 2.</div>`
+    : '';
+  let data=Object.values(o).sort((a,b)=>b.gasto-a.gasto);
+  const tot={gasto:0,impresiones:0,clics:0,lpv:0,leads:0};
+  data.forEach(d=>{tot.gasto+=d.gasto;['impresiones','clics','lpv','leads'].forEach(x=>tot[x]+=d[x])});
+  const T=document.getElementById('t-plac'),mx=Math.max(1,...data.map(d=>d.impresiones));
+  /* una ubicación con el «mejor coste por lead» sobre 3 leads no es una ganadora:
+     sin muestra mínima no se recomienda nada */
+  const MINL=10, MINI=2000, cplTot=dv(tot.gasto,tot.leads);
+  const accion=d=>{
+    if(d.leads<MINL||d.impresiones<MINI)return{t:'Sin datos suficientes',chip:'ch-dor'};
+    const r=dv(d.gasto,d.leads)/cplTot;
+    if(r<=0.8)return{t:'Concentrar aquí',chip:'ch-act'};
+    if(r>=1.5)return{t:'Excluir o revisar',chip:'ch-pau'};
+    return{t:'Mantener',chip:'ch-tst'}};
+  T.querySelector('thead').innerHTML='<tr><th>Ubicación</th><th>Inversión</th><th>Impresiones</th><th>Clics</th><th>CTR</th><th>Visitas landing</th><th>Leads</th><th>Coste/lead Meta</th><th>vs media</th><th>CPM</th><th>% inversión</th><th>Acción</th></tr>';
+  T.querySelector('tbody').innerHTML=data.map(d=>{const a=accion(d),r=(d.leads>=MINL&&cplTot)?dv(d.gasto,d.leads)/cplTot:null;
+    return `<tr class="${d.leads<MINL||d.impresiones<MINI?'lowdata':''}"><td>${esc(d.k)}</td><td>${ef(d.gasto)}</td>
+    <td><span class="heat" style="${heat(d.impresiones,mx,'127,224,176')}">${nf(d.impresiones)}</span></td>
+    <td>${nf(d.clics)}</td><td>${pf(pc(d.clics,d.impresiones))}</td><td>${nf(d.lpv)}</td><td>${nf(d.leads)}</td>
+    <td>${d.leads?ef(dv(d.gasto,d.leads)):'—'}</td>
+    <td>${r?'<span class="'+(r<=1?'pos':'neg')+'">'+r.toFixed(2)+'×</span>':'—'}</td>
+    <td>${ef(dv(d.gasto,d.impresiones)*1000)}</td>
+    <td>${pf(pc(d.gasto,tot.gasto))}</td>
+    <td><span class="chip ${a.chip}">${a.t}</span></td></tr>`}).join('');
+  T.querySelector('tfoot').innerHTML=`<tr><td>TOTAL</td><td>${ef(tot.gasto)}</td><td>${nf(tot.impresiones)}</td><td>${nf(tot.clics)}</td>
+    <td>${pf(pc(tot.clics,tot.impresiones))}</td><td>${nf(tot.lpv)}</td><td>${nf(tot.leads)}</td>
+    <td>${tot.leads?ef(dv(tot.gasto,tot.leads)):'—'}</td><td>—</td><td>${ef(dv(tot.gasto,tot.impresiones)*1000)}</td><td>100,00 %</td><td>—</td></tr>`;
+  document.getElementById('plac-note').innerHTML=
+    `Las entradas al canal <b>no tienen ubicación</b>: viven en el enlace de PremiumPay, no en Meta. Por eso aquí se decide con el coste por lead de Meta, no con el CPL real. `+
+    `Una ubicación sólo recibe recomendación si supera <b>${MINL} leads y ${nf(MINI)} impresiones</b> en la ventana; por debajo aparece como «sin datos suficientes» aunque su coste por lead sea el mejor de la tabla.`;
+}
+function alerts(){
+  let h='<h3>⚠ Avisos de integración y cómo leer estos datos</h3><ul>';
+  h+=`<li><b>Moneda.</b> Meta factura en USD y PremiumPay en EUR. La inversión se convierte al tipo <code>1 USD = ${FX.toLocaleString('es-ES',{minimumFractionDigits:4})} EUR</code> (${esc(DATA.fx_fuente)}, ${esc(DATA.fx_fecha)}), editable en la cabecera. Los ingresos ya vienen en euros.</li>`;
+  h+=`<li><b>Emparejamiento por clave estructurada.</b> Los nombres se parten por guion bajo y se ignoran los tokens de relleno (<code>PRO</code>, <code>INTERESES</code>) y los de mes (<code>AGO2026</code>). Siempre dentro del mismo tipster: ${DATA.colisiones} claves aparecen en más de uno.</li>`;
+  h+=`<li><b>Los pagos no tienen fecha.</b> Se imputan a la fecha de entrada del suscriptor que pagó. Correcto para medir publicidad, pero no es caja del día.</li>`;
+  h+=`<li><b>Ventanas desalineadas.</b> Meta cubre ${DATA.rango_meta[0]} a ${DATA.rango_meta[1]} y PremiumPay ${DATA.rango_pp[0]} a ${DATA.rango_pp[1]}.</li>`;
+  const g1=AVI.filter(a=>a.tipo.startsWith('Conjunto'));
+  if(g1.length)h+=`<li><b>Conjuntos de Meta sin enlace en PremiumPay (${g1.length}).</b> Su inversión cuenta pero sus entradas no se pueden atribuir, lo que empeora artificialmente el CPL: ${g1.map(a=>`<code>${esc(a.valor)}</code> (${esc(a.detalle)})`).join(', ')}.</li>`;
+  const g2=AVI.filter(a=>a.tipo.startsWith('Enlace'));
+  if(g2.length)h+=`<li><b>Enlaces sin conjunto en Meta (${g2.length}).</b> Suman entradas sin inversión y van a la fila «Genérico»: ${g2.map(a=>`<code>${esc(a.valor)}</code> (${esc(a.detalle)})`).join(', ')}.</li>`;
+  if(OTROS.length)h+=`<li><b>Tipsters en el export sin datos de PremiumPay (${OTROS.length}).</b> Excluidos del cálculo porque no se les puede medir el resultado: ${OTROS.map(o=>`${esc(o.tipster)} (${ef(o.gasto_eur)}, ${nf(o.leads)} leads)`).join(', ')}. Suman ${ef(OTROS.reduce((a,o)=>a+o.gasto_eur,0))}.</li>`;
+  h+='</ul>';
+  document.getElementById('alerts').innerHTML=h;
+}
+
+/* ═══════════════════ PESTAÑA · COMPARAR ═══════════════════ */
+/* Cruza tipsters, conjuntos o países en la misma ventana. Ignora a propósito los filtros
+   de tipster y país de la cabecera: si los respetara no se podrían cruzar entre ellos. */
+function cmpUni(){
+  const rows=D.filter(r=>r.dia>=ST.from&&r.dia<=ST.to);
+  const o={};
+  rows.forEach(r=>{const k=r[CM.modo];if(k===undefined||k===null||k==='')return;
+    (o[k]=o[k]||{k,rows:[],tipster:r.tipster,pais:r.pais}).rows.push(r)});
+  return Object.values(o).map(e=>({...e,...met(sum(e.rows))})).sort((a,b)=>b.gasto-a.gasto);
+}
+const CMFILAS=[['gasto','Inversión',ef,0],['impresiones','Impresiones',nf,0],['cpm','CPM',ef,-1],
+  ['clics','Clics',nf,0],['ctr','CTR',pf,1],['cpc','CPC',ef,-1],['leads','Leads',nf,0],
+  ['c2l','Clic → Lead',pf,1],['cplm','Coste por lead (Meta)',ef,-1],['entradas','Entradas',nf,0],
+  ['l2e','Lead → Entrada',pf,1],['cpl','CPL (coste por entrada)',ef,-1],
+  ['pend','Pendientes de aprobar',nf,-1],['aprob','Tasa de aprobación',pf,1],['cplaj','CPL si se aprueba la cola',ef,-1],
+  ['obj','Objetivo de CPL',ef,0],
+  ['idx','CPL vs objetivo',v=>v.toFixed(2)+'×',-1],['pagadores','Pagadores',nf,0],['tasa','Entrada → Pago',pf,1],
+  ['ingresos','Ingresos',ef,0],['ing_ent','Ingreso por entrada',ef,1],['ticket','Ingreso por pagador',ef,1],['roas','ROAS',xf,1]];
+const CMMET=[['cpl','CPL'],['entradas','Entradas'],['gasto','Inversión'],['leads','Leads'],
+  ['ctr','CTR'],['c2l','Clic → Lead'],['l2e','Lead → Entrada']];
+
+function comparar(C){
+  const med=C&&C.med?C.med:null;
+  const uni=cmpUni();
+  document.getElementById('cmp-modo').innerHTML=[['tipster','Tipster'],['grupo','Conjunto'],['pais','País']]
+    .map(([v,t])=>`<button class="pill${v===CM.modo?' on':''}" data-cmo="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-cmo]').forEach(b=>b.onclick=()=>{CM.modo=b.dataset.cmo;CM.sel=[];CM.q='';render()});
+  document.getElementById('cmp-warn').innerHTML=
+    `Ventana comparada: <b>${ST.from}</b> a <b>${ST.to}</b>. El comparador <b>ignora los filtros de tipster y de país</b> de la cabecera —si los respetara no podrías cruzarlos— pero sí respeta el rango de fechas y el tipo de cambio.`;
+  /* selección por defecto: los tres que más invierten */
+  const validos=uni.map(e=>e.k);
+  CM.sel=CM.sel.filter(k=>validos.includes(k));
+  if(!CM.sel.length)CM.sel=uni.slice(0,Math.min(3,uni.length)).map(e=>e.k);
+
+  const q=document.getElementById('cmp-q');
+  if(document.activeElement!==q)q.value=CM.q;
+  q.oninput=()=>{CM.q=q.value;cmpLista(uni)};
+  document.getElementById('cmp-top3').onclick=()=>{CM.sel=uni.slice(0,3).map(e=>e.k);render()};
+  document.getElementById('cmp-top5').onclick=()=>{CM.sel=uni.slice(0,5).map(e=>e.k);render()};
+  document.getElementById('cmp-none').onclick=()=>{CM.sel=[];cmpLista(uni);cmpTablas(uni,med)};
+  cmpLista(uni);
+  cmpTablas(uni,med);
+}
+function cmpLista(uni){
+  let L=uni;
+  const t=CM.q.trim().toLowerCase();
+  if(t)L=L.filter(e=>String(e.k).toLowerCase().includes(t));
+  document.getElementById('cmp-sel').innerHTML=L.slice(0,120).map(e=>{
+    const on=CM.sel.includes(e.k);
+    return `<button class="pill${on?' on':''}" data-cse="${esc(e.k)}">${on?'✓ ':''}${esc(e.k)}
+      <span style="opacity:.75;font-weight:600">${ef(e.gasto)} · ${nf(e.entradas)} ent.</span></button>`}).join('')
+    ||'<span class="mini">Nada coincide con el filtro.</span>';
+  document.querySelectorAll('[data-cse]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.cse;
+    CM.sel=CM.sel.includes(k)?CM.sel.filter(x=>x!==k):CM.sel.concat([k]);
+    cmpLista(uni);cmpTablas(uni,null,true)});
+  document.getElementById('cmp-cnt').textContent=`${CM.sel.length} seleccionados de ${uni.length}`;
+}
+let _cmpMed=null;
+function cmpTablas(uni,med,reuse){
+  if(!reuse)_cmpMed=med;else med=_cmpMed;
+  const E=CM.sel.map(k=>uni.find(e=>e.k===k)).filter(Boolean);
+  document.getElementById('cmp-empty').style.display=E.length<2?'':'none';
+  document.getElementById('cmp-body').style.display=E.length<2?'none':'';
+  if(E.length<2)return;
+  E.forEach(e=>{
+    const ob=CM.modo==='pais'?{v:null,fuente:'ninguna'}
+      :(CM.modo==='tipster'?objetivoCPL(e.k,'*',med):objetivoCPL(e.tipster,e.pais,med));
+    e.obj=ob.v;e.objf=ob.fuente;
+    e.idx=(ob.v&&e.cpl)?e.cpl/ob.v:null;
+    e.bajo=e.entradas<CFG.umbral.entradas_min;
+    /* la cola de aprobación no se puede repartir por país: solo por conjunto o tipster */
+    const q=CM.modo==='grupo'?PG[e.k]:(CM.modo==='tipster'?PT[e.k]:null);
+    e.pend=q?q.pend:null;
+    e.aprob=(q&&q.sol)?q.vida/q.sol*100:null;
+    e.cplaj=(q&&q.pend)?dv(e.gasto,e.entradas+q.pend):null;
+  });
+
+  /* ---------- cara a cara ---------- */
+  const T=document.getElementById('t-cmp');
+  T.querySelector('thead').innerHTML='<tr><th>Métrica</th>'+E.map(e=>
+    `<th>${CM.modo==='pais'?'':'<span class="dot" style="background:'+(TC[CM.modo==='tipster'?e.k:e.tipster]||'#999')+'"></span>'}${esc(e.k)}${e.bajo?' ⚠':''}</th>`).join('')+'</tr>';
+  const cuerpo=CMFILAS.filter(([k])=>HAYPEND||!['pend','aprob','cplaj'].includes(k)).map(([k,lb,fmt,dir])=>{
+    const vals=E.map(e=>{const v=e[k];return (v===null||v===undefined||!isFinite(v))?null:v});
+    const def=vals.filter(v=>v!==null);
+    let bi=-1,wi=-1;
+    if(dir&&def.length>1&&Math.min(...def)!==Math.max(...def)){
+      const mejor=dir>0?Math.max(...def):Math.min(...def), peor=dir>0?Math.min(...def):Math.max(...def);
+      bi=vals.indexOf(mejor);wi=vals.indexOf(peor);
+    }
+    return `<tr><td class="nm">${lb}</td>`+vals.map((v,i)=>{
+      const cls=i===bi?'best':(i===wi?'worst':'');
+      return `<td class="${cls}">${v===null?'—':fmt(v)}</td>`}).join('')+'</tr>';
+  }).join('');
+  T.querySelector('tbody').innerHTML=cuerpo;
+  document.getElementById('cmp-h').textContent='Cara a cara · '+E.length+' '+(CM.modo==='tipster'?'tipsters':(CM.modo==='pais'?'países':'conjuntos'));
+  const flojos=E.filter(e=>e.bajo).map(e=>e.k);
+  document.getElementById('cmp-note').innerHTML=
+    `El objetivo de CPL se resuelve por la clave más específica que exista (tipster + país → tipster → global); cuando no hay ninguno se usa la mediana de los conjuntos activos y la fila «Objetivo» lo refleja igualmente. `+
+    (HAYPEND&&CM.modo!=='pais'?`«Pendientes» es la cola de aprobación de PremiumPay${PENDF?' a '+esc(PENDF):''}, en totales de por vida del enlace: la fila «CPL si se aprueba la cola» es un escenario, no una medición${CM.modo==='pais'?'':''}. `:'')+
+    (HAYPEND&&CM.modo==='pais'?`La cola de aprobación no se puede repartir por país, así que esas filas no aparecen en este modo. `:'')+
+    (flojos.length?`<b>Muestra baja en ${flojos.map(esc).join(', ')}</b>: menos de ${CFG.umbral.entradas_min} entradas en la ventana, así que su CPL y sus porcentajes son ruido más que señal. `:'')+
+    `El ROAS se calcula por cohorte de entrada; con ${nf(CU.pagos||0)} pagos en total no sirve para mover presupuesto, sólo como indicio.`;
+  window.__cmp={head:['Métrica'].concat(E.map(e=>e.k)),
+    filas:CMFILAS.filter(([k])=>HAYPEND||!['pend','aprob','cplaj'].includes(k)).map(([k,lb,fmt])=>[lb].concat(E.map(e=>{const v=e[k];
+      return (v===null||v===undefined||!isFinite(v))?'':(typeof v==='number'?v.toFixed(2).replace('.',','):v)})))};
+  document.getElementById('cmp-copy').onclick=()=>cmpExp('copy');
+  document.getElementById('cmp-csv').onclick=()=>cmpExp('csv');
+
+  /* ---------- embudo comparado ---------- */
+  const FT=document.getElementById('t-cmpfun');
+  const fc=[['impresiones','Impresiones',nf,0],['ctr','CTR',pf,1],['clics','Clics',nf,0],['c2l','Clic→Lead',pf,1],
+    ['leads','Leads',nf,0],['l2e','Lead→Entrada',pf,1],['entradas','Entradas',nf,0],['cpl','CPL',ef,-1],
+    ['tasa','Entrada→Pago',pf,1],['pagadores','Pagadores',nf,0],['ing_ent','Ingreso/entrada',ef,1]];
+  FT.querySelector('thead').innerHTML='<tr><th>'+(CM.modo==='tipster'?'Tipster':(CM.modo==='pais'?'País':'Conjunto'))+'</th>'+
+    fc.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>';
+  const peorCol={};
+  fc.forEach(([k,,,dir])=>{if(!dir)return;
+    const v=E.filter(e=>!e.bajo&&e[k]!==null&&isFinite(e[k])).map(e=>e[k]);
+    peorCol[k]=v.length>1?(dir>0?Math.min(...v):Math.max(...v)):null});
+  FT.querySelector('tbody').innerHTML=E.map(e=>`<tr class="${e.bajo?'lowdata':''}">
+    <td class="nm">${CM.modo==='pais'?'':'<span class="dot" style="background:'+(TC[CM.modo==='tipster'?e.k:e.tipster]||'#999')+'"></span>'}${esc(e.k)}${e.bajo?' <span class="chip ch-dor">muestra baja</span>':''}</td>`+
+    fc.map(([k,,fmt])=>{const v=e[k];
+      const cls=(peorCol[k]!==null&&peorCol[k]!==undefined&&v===peorCol[k]&&!e.bajo)?'worst':'';
+      return `<td class="${cls}">${(v===null||v===undefined||!isFinite(v))?'—':fmt(v)}</td>`}).join('')+'</tr>').join('');
+
+  /* ---------- evolución comparada ---------- */
+  document.getElementById('cmp-met').innerHTML=CMMET.map(([v,t])=>
+    `<button class="pill${v===CM.met?' on':''}" data-cme="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-cme]').forEach(b=>b.onclick=()=>{CM.met=b.dataset.cme;cmpTablas(uni,null,true)});
+  document.getElementById('cmp-mm').innerHTML=[[1,'Día a día'],[7,'Media 7 días']].map(([v,t])=>
+    `<button class="pill${v===CM.mm?' on':''}" data-cmm="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-cmm]').forEach(b=>b.onclick=()=>{CM.mm=+b.dataset.cmm;cmpTablas(uni,null,true)});
+  const dias=[];for(let d=ST.from;d<=ST.to;d=addD(d,1))dias.push(d);
+  const ds=E.map(e=>({label:e.k,data:cmpSerie(e.rows,dias,CM.met,CM.mm),
+    borderColor:TC[CM.modo==='tipster'?e.k:e.tipster]||'#999',backgroundColor:'transparent',
+    tension:.25,borderWidth:2.5,pointRadius:CM.mm>1?0:2.5,spanGaps:true}));
+  const lb=(CMMET.find(x=>x[0]===CM.met)||['','']) [1];
+  draw('c-cmp','line',{labels:dias,datasets:ds},{plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.raw===null?'—':
+      (['ctr','c2l','l2e'].includes(CM.met)?pf(c.raw):(['cpl','gasto'].includes(CM.met)?ef(c.raw):nf(c.raw))))}}},
+    scales:{y:{title:{display:true,text:lb+(CM.mm>1?' · media 7 días':'')}}}});
+}
+/* serie diaria de una métrica, con ventana móvil sobre los sumandos (no sobre el ratio) */
+function cmpSerie(rows,dias,k,w){
+  return dias.map((d,i)=>{const a=dias[Math.max(0,i-w+1)];
+    const sel=rows.filter(r=>r.dia>=a&&r.dia<=d);
+    if(!sel.length)return null;
+    const m=met(sum(sel)),v=m[k];
+    if(v===null||v===undefined||!isFinite(v))return null;
+    return w>1&&['entradas','gasto','leads'].includes(k)?v/Math.min(w,i+1):v});
+}
+function cmpExp(kind){
+  const o=window.__cmp;if(!o)return;
+  const sep=kind==='csv'?';':'\t';
+  const txt=[o.head.join(sep)].concat(o.filas.map(f=>f.join(sep))).join('\n');
+  if(kind==='csv')dl('comparativa.csv','\ufeff'+txt,'text/csv;charset=utf-8');
+  else{navigator.clipboard.writeText(txt);const b=document.getElementById('cmp-copy');
+    const t=b.textContent;b.textContent='Copiado ✓';setTimeout(()=>b.textContent=t,1600)}
+}
+
+/* ═══════════════════ PESTAÑA · CIERRE ═══════════════════ */
+function domingo(iso){return addD(lunes(iso),6)}
+function lunes(iso){const t=new Date(iso+'T12:00:00Z');return addD(iso,-((t.getUTCDay()+6)%7))}
+function etiqSem(l){const f=x=>x.slice(8,10)+'/'+x.slice(5,7);return f(l)+' – '+f(domingo(l))}
+function semanas(){const s=new Set();D.forEach(r=>s.add(lunes(r.dia)));return[...s].sort().reverse()}
+function cmRango(){if(CMP==='semana'&&CMS)return[CMS,domingo(CMS)];
+  if(CMP==='mes'){const m=(ST.to||D_MAX).slice(0,7);return[m+'-01',m+'-31']}return[ST.from,ST.to]}
+function cierre(){
+  const[cf,ct]=cmRango();
+  const rows=D.filter(r=>r.dia>=cf&&r.dia<=ct&&(!ST.tip||r.tipster===ST.tip)&&(!ST.pais||r.pais===ST.pais));
+  const key=r=>CMG==='tipster'?r.tipster:(CMG==='pais'?(r.pais||'—'):r.grupo);
+  const o={};
+  rows.forEach(r=>{const isSin=r.grupo===SIN;const k=isSin&&CMG!=='conj'?SIN:key(r);
+    o[k]=o[k]||{k,gasto:0,entradas:0,ingresos:0,sin:isSin};
+    o[k].gasto+=gEur(r);o[k].entradas+=r.entradas;o[k].ingresos+=r.ingresos});
+  let data=Object.values(o).sort((a,b)=>a.sin?1:b.sin?-1:b.gasto-a.gasto);
+  const tot=data.reduce((a,r)=>({gasto:a.gasto+r.gasto,entradas:a.entradas+r.entradas,ingresos:a.ingresos+r.ingresos}),{gasto:0,entradas:0,ingresos:0});
+  const H=[CMG==='tipster'?'Tipster':(CMG==='pais'?'País':'Conjunto'),'Inversión (€)','Entradas','CPL (€)','Ventas (€)','Retorno'];
+  const T=document.getElementById('cm-t'),r2=n=>(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+  T.querySelector('thead').innerHTML='<tr>'+H.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  T.querySelector('tbody').innerHTML=data.map(d=>`<tr class="${d.sin?'sin':''}"><td class="nm">${esc(d.k)}</td>
+    <td>${r2(d.gasto)} €</td><td>${nf(d.entradas)}</td>
+    <td>${d.gasto&&d.entradas?r2(d.gasto/d.entradas)+' €':'—'}</td>
+    <td>${r2(d.ingresos)} €</td><td>${d.gasto?r2(d.ingresos/d.gasto):'—'}</td></tr>`).join('');
+  T.querySelector('tfoot').innerHTML=`<tr><td>TOTAL</td><td>${r2(tot.gasto)} €</td><td>${nf(tot.entradas)}</td>
+    <td>${r2(dv(tot.gasto,tot.entradas))} €</td><td>${r2(tot.ingresos)} €</td><td>${r2(dv(tot.ingresos,tot.gasto))}</td></tr>`;
+  const et=CMP==='semana'&&CMS?`Semana del ${etiqSem(CMS)} (${cf} a ${ct})`:(CMP==='mes'?`Mes de ${ct.slice(0,7)}`:`Periodo ${cf} a ${ct}`);
+  document.getElementById('cm-h').textContent=CMP==='semana'?'Cierre de semana':(CMP==='mes'?'Cierre de mes':'Cierre del periodo');
+  document.getElementById('cm-sub').textContent=et+' · cohorte por fecha de entrada';
+  document.getElementById('cm-fx').textContent=`Inversión convertida de USD a EUR al tipo 1 USD = ${FX.toLocaleString('es-ES',{minimumFractionDigits:4})} EUR (${DATA.fx_fuente}, ${DATA.fx_fecha}). CPL = Inversión / Entradas. Retorno = Ventas / Inversión.`;
+  window.__cm={data,tot,H,et,cf,ct};
+}
+function cmExp(kind){const{data,tot,H,et,cf,ct}=window.__cm,r2=n=>(n||0).toFixed(2).replace('.',',');
+  const nom='cierre_'+(CMP==='semana'?'semana_'+cf:(CMP==='mes'?ct.slice(0,7):cf+'_'+ct));
+  if(kind==='json'){const j={title:'Cierre '+et,output:'/mnt/user-data/outputs/'+nom+'.xlsx',normalize:{},
+    periodo:{desde:cf,hasta:ct},fx:{usd_eur:FX,fecha:DATA.fx_fecha},
+    rows:data.map(d=>({tipster:d.k,pais:d.k,gasto:+d.gasto.toFixed(2),entradas:d.entradas,ventas:+d.ingresos.toFixed(2)}))};
+    dl(nom+'.json',JSON.stringify(j,null,2),'application/json');return}
+  const sep=kind==='csv'?';':'\t',L=[et,H.join(sep)];
+  data.forEach(d=>L.push([d.k,r2(d.gasto),d.entradas,d.entradas?r2(d.gasto/d.entradas):'',r2(d.ingresos),d.gasto?r2(d.ingresos/d.gasto):''].join(sep)));
+  L.push(['TOTAL',r2(tot.gasto),tot.entradas,r2(dv(tot.gasto,tot.entradas)),r2(tot.ingresos),r2(dv(tot.ingresos,tot.gasto))].join(sep));
+  const t=L.join('\n');
+  if(kind==='csv')dl(nom+'.csv','\ufeff'+t,'text/csv');
+  else navigator.clipboard.writeText(t).then(()=>{const b=document.getElementById('cm-copy'),o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,1500)});
+}
+function dl(n,c,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:m}));a.download=n;document.body.appendChild(a);a.click();a.remove()}
+
+/* ═══════════════════ PESTAÑA · AJUSTES ═══════════════════ */
+function ajustes(C){
+  const paises=[...new Set(D.filter(r=>r.grupo!==SIN).map(r=>r.pais))].filter(p=>p&&p!=='—').sort();
+  const prefs=Object.keys(NOM);
+  const T=document.getElementById('t-obj');
+  T.querySelector('thead').innerHTML='<tr><th>Tipster</th>'+paises.map(p=>`<th>${esc(p)}</th>`).join('')+'<th>Todo el tipster</th></tr>';
+  T.querySelector('tbody').innerHTML=prefs.map(p=>`<tr><td class="nm">${esc(NOM[p])}<div class="mini">${esc(p)}</div></td>`+
+    paises.map(pa=>`<td><input type="number" step="0.01" min="0" data-obj="${esc(p)}||${esc(pa)}" value="${val(p+'||'+pa)}" placeholder="—"></td>`).join('')+
+    `<td><input type="number" step="0.01" min="0" data-obj="${esc(p)}||*" value="${val(p+'||*')}" placeholder="—"></td></tr>`).join('')+
+    `<tr><td class="nm"><b>Global</b><div class="mini">se usa si no hay nada más específico</div></td>`+
+    paises.map(()=>'<td>—</td>').join('')+
+    `<td><input type="number" step="0.01" min="0" data-obj="*||*" value="${val('*||*')}" placeholder="—"></td></tr>`;
+  T.querySelectorAll('[data-obj]').forEach(i=>i.onchange=()=>{
+    const v=i.value.trim();
+    if(v!==''&&(!isFinite(+v)||+v<0)){alert('El objetivo de CPL tiene que ser un número positivo en euros.');i.value='';return}
+    if(v==='')delete CFG.objetivos[i.dataset.obj];else CFG.objetivos[i.dataset.obj]=+v;DIRTY=true;render()});
+  function val(k){const v=CFG.objetivos[k];return v==null?'':v}
+
+  // --- presupuestos mensuales ---
+  const meses=mesesDisponibles().slice(0,4).reverse();
+  const sig=(()=>{const m=meses[meses.length-1]||D_MAX.slice(0,7);
+    const y=+m.slice(0,4),n=+m.slice(5,7);return n===12?(y+1)+'-01':y+'-'+String(n+1).padStart(2,'0')})();
+  const cols=[...meses,sig];
+  const keys=tipsterKeys();
+  const P=document.getElementById('t-pres');
+  P.querySelector('thead').innerHTML='<tr><th>Tipster</th>'+cols.map(m=>
+    `<th>${m}${m===sig?' <span class="tag">próximo</span>':''}</th>`).join('')+'</tr>';
+  P.querySelector('tbody').innerHTML=keys.map(p=>`<tr><td class="nm">${esc(nomDe(p))}${NOM[p]?'':'<span class="tag w">sin PP</span>'}</td>`+
+    cols.map(m=>{const v=CFG.presupuestos[p+'||'+m];
+      return `<td><input type="number" step="10" min="0" data-pres="${esc(p)}||${m}" value="${v==null?'':v}" placeholder="—"></td>`}).join('')+'</tr>').join('');
+  P.querySelector('tfoot').innerHTML='<tr><td>TOTAL</td>'+cols.map(m=>{
+    const s=keys.reduce((a,p)=>a+(+CFG.presupuestos[p+'||'+m]||0),0);
+    return `<td>${s?ef(s):'—'}</td>`}).join('')+'</tr>';
+  P.querySelectorAll('[data-pres]').forEach(i=>i.onchange=()=>{
+    const v=i.value.trim();
+    if(v!==''&&(!isFinite(+v)||+v<0)){alert('El presupuesto tiene que ser un número positivo en euros.');i.value='';return}
+    if(v==='')delete CFG.presupuestos[i.dataset.pres];else CFG.presupuestos[i.dataset.pres]=+v;DIRTY=true;render()});
+  document.getElementById('cfg-copmes').onclick=()=>{
+    const dst=cols[cols.length-1],src=cols[cols.length-2];
+    if(!src)return;
+    if(!confirm(`Copiar los presupuestos de ${src} a ${dst}? Se sobrescribe lo que haya en ${dst}.`))return;
+    keys.forEach(p=>{const v=CFG.presupuestos[p+'||'+src];
+      if(v!=null)CFG.presupuestos[p+'||'+dst]=v});
+    guardarCfg();render()};
+
+  const U=CFG.umbral;
+  const um=[['gasto_min_eur','Inversión mínima antes de juzgar un conjunto','€'],
+    ['entradas_min','Entradas mínimas para fiarse del CPL','entradas'],
+    ['inactividad_dias','Días sin gasto para considerarlo parado (si falta la columna de Meta)','días'],
+    ['pausar_pct','Pausar cuando el CPL supera este % del objetivo','%'],
+    ['optimizar_pct','Optimizar cuando el CPL supera este % del objetivo','%'],
+    ['escalar_pct','Escalar cuando el CPL baja de este % del objetivo','%'],
+    ['pagadores_min','Pagadores mínimos para que el retorno cuente','pagadores']];
+  document.getElementById('t-umb').querySelector('tbody').innerHTML=um.map(([k,lb,u])=>
+    `<tr><td style="text-align:left">${lb}</td><td><input type="number" step="1" min="0" data-umb="${k}" value="${U[k]}"> <span class="mini">${u}</span></td></tr>`).join('');
+  document.querySelectorAll('[data-umb]').forEach(i=>i.onchange=()=>{
+    const v=+i.value;if(!isFinite(v)||v<0){alert('Ese umbral tiene que ser un número positivo.');i.value=CFG.umbral[i.dataset.umb];return}
+    CFG.umbral[i.dataset.umb]=v;DIRTY=true;render()});
+
+  const E=document.getElementById('t-est');
+  const grupos=[...new Set(D.filter(r=>r.grupo!==SIN).map(r=>r.grupo))].sort();
+  E.querySelector('thead').innerHTML='<tr><th>Conjunto</th><th>Estado en Meta</th><th>Estado manual</th><th>Hasta</th><th>Responsable</th><th>Nota</th></tr>';
+  E.querySelector('tbody').innerHTML=grupos.map(g=>{
+    const m=MG[g]||{},cur=CFG.estados[g]||{};
+    return `<tr><td class="nm">${esc(g)}</td>
+      <td>${m.estado?esc(m.estado):'<span class="mini">sin dato</span>'}</td>
+      <td><select data-est="${esc(g)}" data-f="estado">
+        ${['','TESTING','ARCHIVADO','PAUSADO'].map(o=>`<option value="${o}"${cur.estado===o?' selected':''}>${o||'— (manda Meta)'}</option>`).join('')}</select></td>
+      <td><input type="date" data-est="${esc(g)}" data-f="hasta" value="${esc(cur.hasta||'')}" style="width:130px"></td>
+      <td><select data-est="${esc(g)}" data-f="owner">${['',...CFG.equipo].map(o=>`<option value="${esc(o)}"${cur.owner===o?' selected':''}>${esc(o)||'—'}</option>`).join('')}</select></td>
+      <td><input class="txt" data-est="${esc(g)}" data-f="nota" value="${esc(cur.nota||'')}" placeholder="por qué"></td></tr>`}).join('');
+  E.querySelectorAll('[data-est]').forEach(i=>i.onchange=()=>{
+    const g=i.dataset.est;CFG.estados[g]=CFG.estados[g]||{};CFG.estados[g][i.dataset.f]=i.value;
+    if(!CFG.estados[g].estado)delete CFG.estados[g];DIRTY=true;render()});
+
+  document.getElementById('store-mode').textContent=STORE.mode==='sheet'
+    ?'Conectado a la hoja de Google · lo que guardes lo ve todo el equipo'
+    :'Guardando en este navegador · nadie más ve tus cambios hasta que conectes la hoja';
+  document.getElementById('t-sheet').querySelector('tbody').innerHTML=
+    `<tr><td style="text-align:left">URL del servicio web de Apps Script</td>
+      <td colspan="2"><input class="txt" id="sh-url" value="${esc(CFG.sheet.url||'')}" placeholder="https://script.google.com/macros/s/…/exec" style="min-width:340px"></td></tr>
+     <tr><td style="text-align:left">Usar la hoja como fuente compartida</td>
+      <td><select id="sh-on"><option value="0"${!CFG.sheet.activo?' selected':''}>No</option><option value="1"${CFG.sheet.activo?' selected':''}>Sí</option></select></td></tr>
+     <tr><td style="text-align:left">Equipo (separado por comas)</td>
+      <td colspan="2"><input class="txt" id="sh-eq" value="${esc(CFG.equipo.join(', '))}" style="min-width:340px"></td></tr>
+     <tr><td style="text-align:left">Última modificación guardada</td>
+      <td colspan="2" style="text-align:left">${CFG.meta&&CFG.meta.cuando?esc(CFG.meta.cuando)+' · '+esc(CFG.meta.quien||'sin identificar'):'<span class="mini">sin registro todavía</span>'}</td></tr>`;
+  pintaDirty();
+  document.getElementById('apps-help').innerHTML=AYUDA;
+}
+function pintaDirty(){
+  const el=document.getElementById('cfg-dirty');if(!el)return;
+  el.innerHTML=DIRTY
+    ?`<div class="wm"><b>Hay cambios sin guardar.</b> Los objetivos, presupuestos, umbrales y estados que acabas de tocar ya afectan a lo que ves en pantalla, pero <b>no los verá nadie más</b> —ni sobrevivirán a un cambio de navegador— hasta que pulses <b>Guardar</b>. Si además quieres que los tenga el repositorio, descarga el <code>config.json</code> y súbelo.</div>`
+    :'';
+}
+/* guardar centralizado: sella quién y cuándo, y apaga el aviso */
+async function guardarCfg(){
+  CFG.meta={quien:ST.who||'sin identificar',cuando:new Date().toISOString().slice(0,16).replace('T',' ')};
+  const msg=await STORE.save();DIRTY=false;pintaDirty();return msg;
+}
+const AYUDA=`
+<ol style="margin-left:18px;line-height:1.9">
+<li>Crea una hoja de cálculo en Google con dos pestañas: <code>config</code> y <code>acciones</code>.</li>
+<li>En la pestaña <code>config</code>, celda A1, escribe <code>json</code>. La celda B1 la rellenará el panel.</li>
+<li>Menú <b>Extensiones → Apps Script</b>. Borra lo que haya y pega el código de abajo.</li>
+<li><b>Implementar → Nueva implementación → Aplicación web</b>. Ejecutar como <b>yo</b>, con acceso para <b>cualquier persona</b>. Copia la URL que termina en <code>/exec</code>.</li>
+<li>Pégala arriba, pon «Usar la hoja» en <b>Sí</b> y pulsa <b>Guardar</b>. Recarga.</li>
+</ol>
+<p style="margin-top:8px">Reparte esa URL al equipo junto con la del panel. Cualquiera con la URL puede leer y escribir la configuración, así que no metas nada sensible: aquí sólo viven objetivos, estados y notas — <b>nunca</b> datos de suscriptores.</p>
+<pre style="background:#f4f6fa;padding:12px;border-radius:8px;overflow:auto;font-size:11px;line-height:1.5;margin-top:8px">const SS = SpreadsheetApp.getActiveSpreadsheet();
+
+function doGet() {
+  const cfg = SS.getSheetByName('config').getRange('B1').getValue();
+  const sh  = SS.getSheetByName('acciones');
+  const v   = sh.getLastRow() > 1 ? sh.getRange(2,1,sh.getLastRow()-1,7).getValues() : [];
+  const log = v.map(r =&gt; ({ts:r[0], grupo:r[1], recomendacion:r[2],
+                          decision:r[3], quien:r[4], nota:r[5], hasta:r[6]}));
+  return out({ok:true, config: cfg ? JSON.parse(cfg) : null, log: log.reverse()});
+}
+
+function doPost(e) {
+  const b = JSON.parse(e.postData.contents);
+  if (b.accion === 'guardar_config') {
+    SS.getSheetByName('config').getRange('B1').setValue(JSON.stringify(b.config));
+  }
+  if (b.accion === 'registrar') {
+    const x = b.entrada;
+    SS.getSheetByName('acciones').appendRow(
+      [x.ts, x.grupo, x.recomendacion, x.decision, x.quien, x.nota, x.hasta]);
+  }
+  return out({ok:true});
+}
+
+function out(o) {
+  return ContentService.createTextOutput(JSON.stringify(o))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>`;
+
+/* anuncios rechazados por Meta: gastan hasta que los rechazan y luego el conjunto
+   entrega peor. No es un problema de rendimiento, es de moderación. */
+/* La cola de aprobación es una foto del momento de la extracción, con totales de por vida
+   del enlace. No se puede repartir por día ni sumar a las entradas del periodo. */
+function avisoCola(){
+  if(!HAYPEND)return '';
+  const tot=PEND.reduce((a,r)=>a+(r.pendientes||0),0);
+  if(!tot)return '';
+  const ent=met(sum(rowsBase())).entradas||0;
+  const pct=ent?tot/ent*100:0;
+  const top=Object.entries(PG).filter(([g,v])=>v.pend>0&&g!==SIN)
+    .sort((a,b)=>b[1].pend-a[1].pend).slice(0,4);
+  if(pct<2)return '';
+  return `<div class="warnbox"><h3>${nf(tot)} solicitudes sin aprobar en la cola de PremiumPay</h3>
+    <p>Equivalen al <b>${pct.toFixed(0)}%</b> de las entradas del periodo. Son personas que ya hicieron clic y pidieron entrar
+    pero que <b>no cuentan como entrada hasta que alguien las apruebe a mano</b>, así que el CPL de estos conjuntos sale peor de lo que es.
+    Los que más acumulan: ${top.map(([g,v])=>esc(g)+' ('+nf(v.pend)+')').join(', ')}.
+    ${PENDF?'Foto de la cola del '+esc(PENDF)+'.':''}
+    El panel no las suma a las entradas —no tienen fecha y se contarían dos veces al aprobarse—, pero sí calcula el
+    <b>CPL ajustado</b> y frena las órdenes de pausar cuando el problema es la cola y no el rendimiento.</p></div>`;
+}
+function avisoRechazos(){
+  const L=[];
+  Object.entries(MG).forEach(([g,m])=>{
+    if(m.rechazados&&m.rechazados.length)L.push({g,n:m.rechazados.length,act:estadoDe(g).activo});
+  });
+  if(!L.length)return '';
+  const tot=L.reduce((a,x)=>a+x.n,0);
+  const viv=L.filter(x=>x.act);
+  return `<div class="warnbox"><h3>${tot} anuncios rechazados por Meta en ${L.length} conjuntos</h3>
+    <p>${viv.length?`<b>${viv.length} de esos conjuntos siguen activos</b>: ${viv.slice(0,6).map(x=>esc(x.g)+' ('+x.n+')').join(', ')}${viv.length>6?'…':''}. Un conjunto con anuncios rechazados entrega peor y su CPL empeora por moderación, no por rendimiento — revisa el rechazo antes de tocar la puja o el presupuesto.`:'Ninguno está activo ahora mismo, así que no urge.'}
+    Los anuncios rechazados de cada conjunto salen en su ficha.</p></div>`;
+}
+
+/* ═══════════════════ PRESUPUESTO Y RITMO ═══════════════════ */
+/* El presupuesto es mensual y por tipster, en euros. El gasto de Meta llega en dólares
+   y se convierte al FX de la cabecera, así que mover el FX mueve el ritmo: es correcto,
+   lo que se factura son dólares.
+   El ritmo se mide contra DÍAS CON DATOS, no contra días de calendario. Si la extracción
+   va con retraso, comparar contra el día de hoy diría que vas corto cuando no lo estás. */
+function tipsterKeys(){
+  const a=[...new Set(D.map(r=>r.pref))];
+  OTROS.forEach(o=>{if(!a.includes(o.tipster))a.push(o.tipster)});
+  return a.sort();
+}
+const nomDe=p=>NOM[p]||p;
+function mesesDisponibles(){
+  const s=new Set();D.forEach(r=>s.add(r.dia.slice(0,7)));OTD.forEach(r=>s.add(r.dia.slice(0,7)));
+  return [...s].sort().reverse();
+}
+function diasDelMes(m){return new Date(Date.UTC(+m.slice(0,4),+m.slice(5,7),0)).getUTCDate()}
+/* gasto en € de un tipster en un mes, día a día */
+function serieGasto(pref,mes){
+  const o={};
+  D.forEach(r=>{if(r.pref===pref&&r.dia.slice(0,7)===mes)o[r.dia]=(o[r.dia]||0)+gEur(r)});
+  OTD.forEach(r=>{if(r.pref===pref&&r.dia.slice(0,7)===mes)o[r.dia]=(o[r.dia]||0)+gEur(r)});
+  return o;
+}
+function pacing(pref,mes){
+  const pres=+(CFG.presupuestos[pref+'||'+mes]??NaN);
+  const serie=serieGasto(pref,mes);
+  const dias=Object.keys(serie).sort();
+  const gastado=Object.values(serie).reduce((a,b)=>a+b,0);
+  const total=diasDelMes(mes);
+  // último día del mes con datos en el export, no el día natural de hoy
+  const ultDato=[D_MAX,mes+'-'+String(total).padStart(2,'0')].sort()[0];
+  const trans=+ultDato.slice(8,10);
+  const rest=total-trans;
+  const entradas=D.filter(r=>r.pref===pref&&r.dia.slice(0,7)===mes).reduce((a,r)=>a+r.entradas,0);
+  const cpl=entradas?gastado/entradas:null;
+  const o={pref,nombre:nomDe(pref),mes,pres:isFinite(pres)?pres:null,gastado,total,trans,rest,
+           entradas,cpl,dias:dias.length,serie,ultDato};
+  if(o.pres===null){o.estado={t:'Sin presupuesto',cls:'fl',chip:'ch-dor'};return o}
+  o.ideal=o.pres*trans/total;
+  o.desv=o.ideal?gastado/o.ideal-1:null;
+  o.restante=o.pres-gastado;
+  o.proy=trans?gastado/trans*total:0;
+  o.ritmoNec=rest>0?o.restante/rest:null;
+  o.ritmoAct=trans?gastado/trans:0;
+  o.entradasRest=(o.cpl&&o.restante>0)?o.restante/o.cpl:null;
+  if(o.restante<=0)o.estado={t:'Agotado',cls:'dn',chip:'ch-pau'};
+  else if(o.proy>o.pres*1.05)o.estado={t:'Se pasa',cls:'dn',chip:'ch-pau'};
+  else if(o.proy<o.pres*0.9)o.estado={t:'Se queda corto',cls:'fl',chip:'ch-tst'};
+  else o.estado={t:'En ritmo',cls:'up',chip:'ch-act'};
+  return o;
+}
+function presupuesto(){
+  const meses=mesesDisponibles();
+  if(!BUDMES||!meses.includes(BUDMES))BUDMES=(ST.to||D_MAX).slice(0,7);
+  if(!meses.includes(BUDMES))BUDMES=meses[0]||D_MAX.slice(0,7);
+  document.getElementById('bud-mes').innerHTML=meses.slice(0,6).map(m=>
+    `<button class="pill${m===BUDMES?' on':''}" data-bm="${m}">${m}</button>`).join('');
+  document.querySelectorAll('[data-bm]').forEach(b=>b.onclick=()=>{BUDMES=b.dataset.bm;render()});
+
+  let P=tipsterKeys().map(p=>pacing(p,BUDMES)).filter(o=>o.gastado>0||o.pres!==null);
+  if(ST.tip)P=P.filter(o=>o.nombre===ST.tip);
+  P.sort((a,b)=>b.gastado-a.gastado);
+
+  const T=P.reduce((a,o)=>({pres:a.pres+(o.pres||0),gastado:a.gastado+o.gastado,
+    entradas:a.entradas+o.entradas}),{pres:0,gastado:0,entradas:0});
+  const total=diasDelMes(BUDMES),ult=[D_MAX,BUDMES+'-'+String(total).padStart(2,'0')].sort()[0],trans=+ult.slice(8,10);
+  const ideal=T.pres*trans/total,proy=trans?T.gastado/trans*total:0,restante=T.pres-T.gastado;
+  const sinPres=P.filter(o=>o.pres===null);
+
+  document.getElementById('bud-h').textContent='Presupuesto de '+BUDMES;
+  document.getElementById('bud-sub').textContent=
+    `Día ${trans} de ${total} · datos hasta ${ult} · ${T.pres?'reparto lineal como referencia':'sin presupuestos definidos todavía'}`;
+
+  const K=[['Presupuesto del mes',T.pres?ef(T.pres):'—',''],
+    ['Gastado',ef(T.gastado),T.pres?`${(T.gastado/T.pres*100).toFixed(0)}% del total`:''],
+    ['Queda',T.pres?ef(restante):'—',T.pres?`${total-trans} días por delante`:''],
+    ['Ritmo esperado a hoy',T.pres?ef(ideal):'—',T.pres?desvTxt(T.gastado/ideal-1):''],
+    ['Proyección a fin de mes',ef(proy),T.pres?desvTxt(proy/T.pres-1,true):''],
+    ['Ritmo diario necesario',(T.pres&&total-trans>0)?ef(restante/(total-trans)):'—',`actual ${ef(trans?T.gastado/trans:0)}/día`]];
+  document.getElementById('bud-kpis').innerHTML=K.map(([lb,v,d])=>
+    `<div class="kpi"><div class="lb">${lb}</div><div class="vl">${v}</div><div class="dl fl">${d}</div></div>`).join('');
+
+  const TB=document.getElementById('t-bud');
+  TB.querySelector('thead').innerHTML='<tr><th>Tipster</th><th>Presupuesto</th><th>Gastado</th><th>Queda</th><th>% consumido</th><th>Ritmo esperado</th><th>Desvío</th><th>€/día actual</th><th>€/día necesario</th><th>Proyección</th><th>Entradas que quedan</th><th>Estado</th></tr>';
+  TB.querySelector('tbody').innerHTML=P.map(o=>`<tr>
+    <td class="nm">${esc(o.nombre)}${NOM[o.pref]?'':'<span class="tag w">sin PremiumPay</span>'}</td>
+    <td>${o.pres===null?'<span class="mini">definir en Ajustes</span>':ef(o.pres)}</td>
+    <td>${ef(o.gastado)}</td>
+    <td>${o.pres===null?'—':`<span class="${o.restante<0?'neg':''}">${ef(o.restante)}</span>`}</td>
+    <td>${o.pres?pf(o.gastado/o.pres*100):'—'}</td>
+    <td>${o.pres===null?'—':ef(o.ideal)}</td>
+    <td>${o.pres===null?'—':desvTxt(o.desv)}</td>
+    <td>${ef(o.ritmoAct)}</td>
+    <td>${o.ritmoNec===null||o.pres===null?'—':`<span class="${o.ritmoNec<0?'neg':''}">${ef(Math.max(0,o.ritmoNec))}</span>`}</td>
+    <td>${o.pres===null?ef(o.proy):`<span class="${o.proy>o.pres*1.05?'neg':(o.proy<o.pres*0.9?'':'pos')}">${ef(o.proy)}</span>`}</td>
+    <td>${o.entradasRest?nf(Math.round(o.entradasRest))+' a '+ef(o.cpl):'—'}</td>
+    <td><span class="chip ${o.estado.chip}">${o.estado.t}</span></td></tr>`).join('')
+    ||'<tr><td colspan="12" style="text-align:center;font-weight:400;color:#6b7a90">Sin inversión en este mes.</td></tr>';
+  TB.querySelector('tfoot').innerHTML=`<tr><td>TOTAL (${P.length})</td><td>${T.pres?ef(T.pres):'—'}</td><td>${ef(T.gastado)}</td>
+    <td>${T.pres?ef(restante):'—'}</td><td>${T.pres?pf(T.gastado/T.pres*100):'—'}</td><td>${T.pres?ef(ideal):'—'}</td>
+    <td>${T.pres?desvTxt(T.gastado/ideal-1):'—'}</td><td>${ef(trans?T.gastado/trans:0)}</td>
+    <td>${(T.pres&&total-trans>0)?ef(Math.max(0,restante/(total-trans))):'—'}</td><td>${ef(proy)}</td><td>—</td><td>—</td></tr>`;
+
+  document.getElementById('bud-note').innerHTML=
+    `El ritmo se mide contra <b>días con datos</b> (hasta el ${ult}), no contra el calendario: si la extracción va con retraso, comparar con hoy te diría que vas corto sin serlo. `+
+    `«Entradas que quedan» aplica el CPL real del tipster este mes al presupuesto restante — es una estimación a ritmo constante, no una promesa. `+
+    `El gasto de Meta se convierte a euros al FX de la cabecera, así que cambiar el tipo mueve estas cifras. `+
+    (sinPres.length?`<br><b>${sinPres.length} tipsters sin presupuesto:</b> ${sinPres.map(o=>esc(o.nombre)).join(', ')} — defínelos en Ajustes → Presupuestos mensuales.`:'');
+
+  // curva acumulada real vs lineal
+  const dd=[];for(let i=1;i<=total;i++)dd.push(BUDMES+'-'+String(i).padStart(2,'0'));
+  let ac=0;const real=dd.map(d=>{if(d>ult)return null;
+    P.forEach(o=>{});ac+=P.reduce((a,o)=>a+(o.serie[d]||0),0);return ac});
+  const lineal=T.pres?dd.map((_,i)=>T.pres*(i+1)/total):[];
+  const ds=[{label:'Gasto acumulado',data:real,borderColor:'#3d63b0',backgroundColor:'#3d63b022',
+    tension:.2,pointRadius:0,fill:true,spanGaps:false}];
+  if(T.pres)ds.push({label:'Ritmo lineal del presupuesto',data:lineal,borderColor:'#8fa0ba',borderDash:[6,4],pointRadius:0,fill:false});
+  draw('c-bud','line',{labels:dd,datasets:ds},{plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}},
+    scales:{y:{title:{display:true,text:'€ acumulados'}}}});
+}
+function desvTxt(d,fin){
+  if(d===null||!isFinite(d))return '—';
+  const p=Math.abs(d*100).toFixed(0);
+  if(Math.abs(d)<0.05)return `<span class="up">en ritmo</span>`;
+  return `<span class="${d>0?'dn':'fl'}">${d>0?'+':'−'}${p}% ${fin?'sobre presupuesto':(d>0?'adelantado':'por debajo')}</span>`;
+}
+/* aviso en la pestaña de hoy si algún tipster se sale de ritmo */
+function avisoPacing(){
+  const mes=(ST.to||D_MAX).slice(0,7);
+  const P=tipsterKeys().map(p=>pacing(p,mes)).filter(o=>o.pres!==null&&o.gastado>0);
+  if(!P.length)return '';
+  const mal=P.filter(o=>o.estado.t==='Se pasa'||o.estado.t==='Agotado');
+  const corto=P.filter(o=>o.estado.t==='Se queda corto');
+  if(!mal.length&&!corto.length)return '';
+  let h='<div class="warnbox'+(mal.length?' bad':'')+'"><h3>Presupuesto de '+mes+'</h3><p>';
+  if(mal.length)h+=`<b>${mal.map(o=>esc(o.nombre)+' ('+o.estado.t.toLowerCase()+', proyección '+ef(o.proy)+' sobre '+ef(o.pres)+')').join('; ')}</b>. `;
+  if(corto.length)h+=`Por debajo de ritmo: ${corto.map(o=>esc(o.nombre)+' ('+ef(o.restante)+' sin gastar, '+(o.total-o.trans)+' días)').join('; ')}. `;
+  return h+'Detalle en la pestaña Presupuesto.</p></div>';
+}
+
+/* ═══════════════════ RENDER ═══════════════════ */
+function render(){
+  _epc.clear();   /* el estado depende de CFG.estados y de ST.to: se recalcula cada render */
+  const base=rowsBase(),rows=F(),prev=rowsPrev();
+  const C=tarjetas(base);
+  const m=met(sum(rows));
+  frescura();cambios(rows,prev);acciones(C);diagnostico(C);historial();presupuesto();
+  kpis(rows,prev);tablaConj(C,rows);liga(rows);mapa(C);retencion();diario(rows);
+  ficha();
+  embudo(m);comparar(C);placement();alerts();cierre();ajustes(C);
+  const tt=TOT?` · inversión total ${ef(TOT.gasto_total_eur)}, atribuible ${ef(TOT.gasto_atribuible_eur)} (${TOT.pct_atribuible}%)`
+    :` · inversión ${ef(m.gasto)}`;
+  document.getElementById('sub').innerHTML=`Meta ${DATA.rango_meta[0]} a ${DATA.rango_meta[1]} (USD) · PremiumPay ${DATA.rango_pp[0]} a ${DATA.rango_pp[1]} (EUR) · ${TIPS.length} tipsters${tt}`;
+  document.getElementById('fxinfo').textContent=`${DATA.fx_fuente}, ${DATA.fx_fecha}`;
+  document.getElementById('foot').innerHTML=`Cuadre: ${nf(CU.entradas)} entradas, ${nf(CU.pagos)} pagos, ${ef(CU.ingresos)} · ${DATA.generado?'generado '+esc(DATA.generado):''} · configuración ${STORE.mode==='sheet'?'compartida en la hoja':'local a este navegador'}`;
+}
+
+/* ═══════════════════ CONTROLES ═══════════════════ */
+const TABS=['Qué hacer hoy','Rendimiento','Conjunto','Comparar','Presupuesto','Embudo','Cierre','Ajustes'];
+function setTab(i){TAB=i;
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',j===i));
+  document.querySelectorAll('.pane').forEach((p,j)=>p.classList.toggle('on',j===i));
+  window.scrollTo({top:0,behavior:'instant'})}
+const PRESETS=[['Último día',1],['3 días',3],['7 días',7],['14 días',14],['30 días',30],['Todo',0]];
+function aplicarPreset(n){
+  if(n===0){ST.from=D_MIN;ST.to=D_MAX}else{ST.to=D_MAX;ST.from=addD(D_MAX,-(n-1));if(ST.from<D_MIN)ST.from=D_MIN}
+  ST.preset=n;syncFiltros();render()}
+function syncFiltros(){
+  document.getElementById('f-from').value=ST.from;
+  document.getElementById('f-to').value=ST.to;
+  document.getElementById('f-tip').value=ST.tip;
+  document.getElementById('f-pais').value=ST.pais;
+  document.getElementById('f-est').value=ST.est;
+  llenarConj();
+  document.getElementById('f-conj').value=ST.conj;
+  document.querySelectorAll('#f-rng button').forEach(b=>b.classList.toggle('on',+b.dataset.n===ST.preset));
+}
+function llenarConj(){
+  const sel=document.getElementById('f-conj');
+  let gs=[...new Set(D.filter(r=>(!ST.tip||r.tipster===ST.tip)&&(!ST.pais||r.pais===ST.pais)&&r.grupo!==SIN).map(r=>r.grupo))].sort();
+  if(ST.est!=='all')gs=gs.filter(g=>{const e=estadoDe(g);
+    return ST.est==='act'?e.activo:(ST.est==='nod'?e.cod==='NOD':!e.activo)});
+  if(ST.conj&&!gs.includes(ST.conj))gs.unshift(ST.conj);
+  sel.innerHTML='<option value="">Todos</option>'+gs.map(g=>{
+    const e=estadoDe(g);return `<option value="${esc(g)}">${esc(g)}${e.activo?'':' · '+e.txt.toLowerCase()}</option>`}).join('');
+}
+function init(){
+  document.getElementById('tabs').innerHTML=TABS.map((t,i)=>`<button class="tab${i?'':' on'}">${t}</button>`).join('');
+  document.querySelectorAll('.tab').forEach((t,i)=>t.onclick=()=>setTab(i));
+  document.getElementById('f-rng').innerHTML=PRESETS.map(([t,n])=>`<button data-n="${n}">${t}</button>`).join('');
+  document.querySelectorAll('#f-rng button').forEach(b=>b.onclick=()=>aplicarPreset(+b.dataset.n));
+
+  const tip=document.getElementById('f-tip');
+  TIPS.forEach(t=>tip.insertAdjacentHTML('beforeend',`<option value="${esc(t)}">${esc(t)}</option>`));
+  const ps=document.getElementById('f-pais');
+  [...new Set(D.map(r=>r.pais))].filter(Boolean).sort().forEach(p=>ps.insertAdjacentHTML('beforeend',`<option value="${esc(p)}">${esc(p)}</option>`));
+  const who=document.getElementById('f-who');
+  who.innerHTML='<option value="">—</option>'+CFG.equipo.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  ST.who=localStorage.getItem('tz_who')||'';who.value=ST.who;
+  who.onchange=()=>{ST.who=who.value;localStorage.setItem('tz_who',ST.who)};
+
+  ['f-from','f-to'].forEach(id=>document.getElementById(id).onchange=e=>{
+    ST[id==='f-from'?'from':'to']=e.target.value;ST.preset=-1;syncFiltros();render()});
+  tip.onchange=e=>{ST.tip=e.target.value;ST.conj='';syncFiltros();render()};
+  ps.onchange=e=>{ST.pais=e.target.value;ST.conj='';syncFiltros();render()};
+  document.getElementById('f-conj').onchange=e=>{ST.conj=e.target.value;if(ST.conj)setTab(2);render()};
+  document.getElementById('f-est').onchange=e=>{ST.est=e.target.value;ST.conj='';syncFiltros();render()};
+  document.getElementById('f-reset').onclick=()=>{ST={...ST,from:D_MIN,to:D_MAX,preset:0,tip:'',pais:'',conj:'',est:'all'};HOYF='';syncFiltros();render()};
+  const fx=document.getElementById('fx');fx.value=FX;
+  fx.onchange=()=>{const v=parseFloat(fx.value);if(v>0.1&&v<2){FX=v;render()}};
+
+  document.getElementById('p-hoy').innerHTML=[['','Todas'],['AHORA','Hacer ahora'],['REVISAR','Revisar'],['OPORT','Oportunidad']]
+    .map(([v,t])=>`<button class="pill${v===HOYF?' on':''}" data-h="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{HOYF=b.dataset.h;
+    document.querySelectorAll('[data-h]').forEach(x=>x.classList.toggle('on',x===b));render()});
+
+  document.getElementById('cm-per').innerHTML=[['rango','Filtro actual'],['semana','Semana'],['mes','Mes']]
+    .map(([v,t])=>`<button class="pill${v===CMP?' on':''}" data-p="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{CMP=b.dataset.p;
+    document.querySelectorAll('[data-p]').forEach(x=>x.classList.toggle('on',x===b));
+    const s=document.getElementById('cm-sem');s.style.display=CMP==='semana'?'':'none';
+    if(CMP==='semana'&&!CMS){CMS=semanas()[0];s.value=CMS}render()});
+  const sem=document.getElementById('cm-sem');
+  sem.innerHTML=semanas().map(l=>`<option value="${l}">${etiqSem(l)}</option>`).join('');
+  sem.onchange=()=>{CMS=sem.value;render()};
+  document.getElementById('cm-grp').innerHTML=[['tipster','Tipster'],['pais','País'],['conj','Conjunto']]
+    .map(([v,t])=>`<button class="pill${v===CMG?' on':''}" data-g="${v}">${t}</button>`).join('');
+  document.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{CMG=b.dataset.g;
+    document.querySelectorAll('[data-g]').forEach(x=>x.classList.toggle('on',x===b));render()});
+  document.getElementById('cm-copy').onclick=()=>cmExp('copy');
+  document.getElementById('cm-csv').onclick=()=>cmExp('csv');
+  document.getElementById('cm-json').onclick=()=>cmExp('json');
+
+  document.getElementById('log-exp').onclick=()=>dl('decisiones.json',JSON.stringify(LOG,null,2),'application/json');
+  document.getElementById('cfg-save').onclick=async()=>{
+    CFG.sheet.url=document.getElementById('sh-url').value.trim();
+    CFG.sheet.activo=document.getElementById('sh-on').value==='1';
+    CFG.equipo=document.getElementById('sh-eq').value.split(',').map(x=>x.trim()).filter(Boolean);
+    const msg=await guardarCfg();
+    document.getElementById('cfg-msg').textContent=msg;
+    render();
+    setTimeout(()=>{const e=document.getElementById('cfg-msg');if(e)e.textContent=''},3000)};
+  document.getElementById('cfg-reset').onclick=async()=>{
+    if(!confirm('Se borran los cambios guardados en este navegador y se vuelve al config.json del repositorio (objetivos, presupuestos, umbrales y estados incluidos). Esto no se puede deshacer. ¿Seguir?'))return;
+    localStorage.removeItem('tz_cfg');
+    await STORE.load();DIRTY=false;render();
+    document.getElementById('cfg-msg').textContent='Restablecido desde el repositorio';};
+  window.addEventListener('beforeunload',e=>{if(DIRTY){e.preventDefault();e.returnValue=''}});
+  document.getElementById('cfg-exp').onclick=()=>dl('config.json',JSON.stringify(CFG,null,2),'application/json');
+  document.getElementById('cfg-imp').onclick=()=>{
+    const i=document.createElement('input');i.type='file';i.accept='.json';
+    i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();
+      rd.onload=()=>{
+        let raw;
+        try{raw=JSON.parse(rd.result)}catch(e){alert('Ese archivo no es un JSON válido: '+e.message);return}
+        if(!raw||typeof raw!=='object'||Array.isArray(raw)){alert('El archivo no tiene la forma de un config.json.');return}
+        const n=normCfg(raw);
+        const nObj=Object.keys(n.objetivos||{}).length,nPres=Object.keys(n.presupuestos||{}).length,
+              nEst=Object.keys(n.estados||{}).length,nUmb=Object.keys(n.umbral||{}).length;
+        if(!nObj&&!nPres&&!nEst&&!nUmb){alert('El archivo se lee, pero no trae objetivos, presupuestos, umbrales ni estados. No se ha importado nada.');return}
+        const malos=Object.entries(n.objetivos||{}).filter(([,v])=>v!==''&&v!=null&&(!isFinite(+v)||+v<0)).map(([k])=>k)
+          .concat(Object.entries(n.presupuestos||{}).filter(([,v])=>v!=null&&(!isFinite(+v)||+v<0)).map(([k])=>k));
+        if(malos.length){alert('Hay valores que no son números positivos y bloquean la importación:\n'+malos.slice(0,10).join('\n'));return}
+        if(!confirm(`Se van a importar ${nObj} objetivos de CPL, ${nPres} presupuestos, ${nUmb} umbrales y ${nEst} estados manuales.\nSe fusionan sobre lo que ya tienes: lo que traiga el archivo gana. ¿Seguir?`))return;
+        CFG=merge(CFG,n);guardarCfg();render();
+        document.getElementById('cfg-msg').textContent='Importado';
+      };
+      rd.readAsText(f)};i.click()};
+  document.getElementById('cfg-seed').onclick=()=>{
+    const C=tarjetas(rowsBase()),med=C.med;
+    if(!med){alert('Todavía no hay conjuntos activos con entradas suficientes para calcular una mediana.');return}
+    if(!confirm(`Se rellenarán los objetivos vacíos con ${ef(med)}, la mediana de los conjuntos activos. ¿Seguir?`))return;
+    Object.keys(NOM).forEach(p=>{if(CFG.objetivos[p+'||*']==null)CFG.objetivos[p+'||*']=+med.toFixed(2)});
+    guardarCfg();render()};
+
+  aplicarPreset(0);
+}
+(async()=>{
+  try{
+    DATA=await loadJSON('data.json');
+    await STORE.load();
+    bind();init();
+  }catch(e){
+    console.error(e);
+    /* Sin data.json no hay panel. El caso más común no es que falte el archivo:
+       es abrir el index.html con doble clic, y ahí el navegador bloquea la lectura. */
+    const local=location.protocol==='file:';
+    document.getElementById('sub').textContent=local
+      ?'El panel no puede leer data.json abriendo el archivo directamente.'
+      :'No se pudo cargar data.json.';
+    document.getElementById('tabs').style.display='none';
+    document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));
+    document.getElementById('foot').innerHTML='';
+    const box=document.createElement('div');
+    document.getElementById('tabs').after(box);
+    box.innerHTML=local
+      ?`<div class="warnbox bad"><h3>Has abierto el archivo con doble clic</h3>
+         <p>El navegador bloquea por seguridad que un archivo local lea otro archivo local, así que
+         <code>data.json</code> nunca llega y el panel se queda vacío —sin pestañas ni datos—.
+         No es un fallo del panel. Dos formas de verlo:</p>
+         <p style="margin-top:8px"><b>1 · Subirlo al repositorio (lo normal).</b>
+         En <code>dashboard_tipszum</code> → <i>Add file → Upload files</i> → arrastra este
+         <code>index.html</code> → <i>Commit</i>. Ábrelo luego en la URL de siempre, en una ventana de incógnito.</p>
+         <p style="margin-top:6px"><b>2 · Verlo en local antes de subirlo.</b>
+         Abre una terminal en la carpeta donde están <code>index.html</code>, <code>data.json</code> y
+         <code>config.json</code>, ejecuta <code>python3 -m http.server 8000</code> y entra en
+         <code>http://localhost:8000</code>.</p></div>`
+      :`<div class="warnbox bad"><h3>No se pudo cargar data.json</h3>
+         <p>Comprueba que <code>data.json</code> está en la misma carpeta que <code>index.html</code>,
+         en la raíz del repositorio. Detalle técnico: ${esc(e.message||String(e))}</p></div>`;
+  }
+})();
+</script>
+</body>
+</html>

@@ -12,6 +12,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Ar
 .wrap{max-width:1580px;margin:0 auto;padding:18px}
 header.top{background:var(--navy);color:#fff;border-radius:var(--r);padding:18px 22px;margin-bottom:14px}
 header.top h1{font-size:19px;font-weight:650;letter-spacing:-.2px}
+header.top .hl{float:right;font-size:12.5px;display:flex;gap:14px;margin-top:2px}
+header.top .hl a{color:#cfe0ff;text-decoration:none;border-bottom:1px solid rgba(207,224,255,.35)}
+header.top .hl a:hover{color:#fff;border-bottom-color:#fff}
+@media(max-width:760px){header.top .hl{float:none;margin:8px 0 0}}
 header.top p{font-size:12.5px;color:#a8bcdc;margin-top:4px}
 .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:16px}
 .fg{display:flex;flex-direction:column;gap:4px}
@@ -146,6 +150,7 @@ tbody tr.lowdata td{background:#fffdf5}
 <div class="wrap">
 
 <header class="top">
+  <div class="hl"><a href="cargar.html">Cargar datos</a><a href="manual.html">Manual</a></div>
   <h1>Panel de decisión · Meta Ads × PremiumPay</h1>
   <p id="sub">Cargando…</p>
   <div class="filters">

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual · Panel Tipszum</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--navy:#1e3a6e;--thead:#3d63b0;--ink:#1f2937;--ink2:#6b7a90;
+--line:#e3e8f0;--green:#188a55;--red:#c8353a;--amber:#c78200;--soft:#f7f9fc}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#fff;padding:18px 22px;position:sticky;top:0;z-index:20}
+header h1{margin:0;font-size:19px;font-weight:700}
+header p{margin:4px 0 0;font-size:13px;opacity:.85}
+header a{color:#cfe0ff}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 80px;display:grid;
+  grid-template-columns:210px minmax(0,1fr);gap:26px;align-items:start}
+nav{position:sticky;top:86px;font-size:13.5px}
+nav a{display:block;padding:5px 9px;color:var(--ink2);text-decoration:none;border-left:2px solid transparent;border-radius:0 5px 5px 0}
+nav a:hover{background:#eef3fb;color:var(--navy)}
+nav a.on{border-left-color:var(--thead);color:var(--navy);font-weight:650;background:#eef3fb}
+nav .sep{margin-top:12px;padding:4px 9px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#9aa7b8;font-weight:700}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 24px;margin-bottom:18px;scroll-margin-top:92px}
+h2{margin:0 0 4px;font-size:17px;color:var(--navy)}
+h2 .n{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--thead);color:#fff;
+  font-size:12.5px;align-items:center;justify-content:center;margin-right:9px;vertical-align:2px;font-weight:700}
+h3{margin:22px 0 6px;font-size:14.5px;color:var(--navy)}
+.lead{color:var(--ink2);font-size:13.5px;margin:0 0 16px}
+p{margin:0 0 12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+th{background:var(--thead);color:#fff;text-align:left;padding:7px 10px;font-weight:600;font-size:12.5px}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+code{background:#eef2f8;padding:1px 6px;border-radius:4px;font-size:12.8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:#10182a;color:#d6e2f5;padding:14px;border-radius:8px;overflow:auto;font-size:12px;line-height:1.55;margin:10px 0}
+pre.plain{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.box{border-radius:8px;padding:12px 15px;margin:14px 0;font-size:13.8px;border:1px solid}
+.b-stop{background:#fdeced;border-color:#e8b9bb;color:#8e2226}
+.b-warn{background:#fff8e8;border-color:#f0dca8;color:#8a5d00}
+.b-ok{background:#e7f7ee;border-color:#b7e3cb;color:#0f6b41}
+.b-info{background:#eef3fb;border-color:#c9d8ef;color:#23406f}
+.box b{color:inherit}
+ul,ol{margin:0 0 12px;padding-left:22px}
+li{margin-bottom:5px}
+.btn{font:inherit;border:1px solid #c4d0e4;background:#fff;color:var(--navy);border-radius:7px;
+  padding:7px 14px;cursor:pointer;font-weight:650;font-size:13px}
+.btn:hover{background:#eef3fb}
+.chk{border:1px solid var(--line);border-radius:8px;padding:14px 18px;background:var(--soft);font-size:13.8px}
+.chk h4{margin:0 0 8px;font-size:13.5px;color:var(--navy);text-transform:uppercase;letter-spacing:.04em}
+.chk ul{list-style:none;padding-left:0}
+.chk li{padding-left:26px;position:relative;margin-bottom:7px}
+.chk li:before{content:'';position:absolute;left:0;top:3px;width:15px;height:15px;border:1.5px solid #9aa7b8;border-radius:3px}
+.chk .sub{padding-left:52px;font-size:12.8px;color:var(--ink2)}
+.chk .sub:before{display:none}
+.mini{font-size:12.5px;color:var(--ink2)}
+.tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:650;
+  background:#eef2f8;color:var(--ink2);white-space:nowrap}
+.tag.ok{background:#e7f7ee;color:var(--green)}
+.tag.bad{background:#fdeced;color:var(--red)}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}nav{position:static;display:none}}
+@media print{
+  header{position:static;background:#fff;color:#000;border-bottom:2px solid #000;padding:0 0 10px}
+  header a,nav,.noprint{display:none!important}
+  .wrap{display:block;max-width:none;padding:0}
+  section{break-inside:avoid;border:0;padding:0 0 14px;margin:0 0 14px;border-bottom:1px solid #ccc}
+  pre{background:#f4f4f4;color:#000;border:1px solid #ccc}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Manual · Cómo actualizar el panel</h1>
+  <p>Rev. 5 · 15 de septiembre de 2026 ·
+     <a href="index.html">Ir al panel</a> · <a href="cargar.html">Cargar datos</a></p>
+</header>
+<div class="wrap">
+<nav id="nav">
+  <div class="sep">El ciclo</div>
+  <a href="#ciclo">De un vistazo</a>
+  <a href="#p1">1 · PremiumPay</a>
+  <a href="#p2">2 · Quanty</a>
+  <a href="#p3">3 · Meta Ads</a>
+  <a href="#p4">4 · Cargar</a>
+  <a href="#p5">5 · Revisar</a>
+  <a href="#p6">6 · Publicar</a>
+  <div class="sep">Además</div>
+  <a href="#ajustes">Objetivos y presupuestos</a>
+  <a href="#errores">Errores frecuentes</a>
+  <a href="#reglas">Reglas que no se rompen</a>
+  <a href="#nombres">Nomenclatura de enlaces</a>
+  <a href="#parar">Cuándo parar</a>
+  <a href="#extractor">El extractor</a>
+  <a href="#checklist">Checklist imprimible</a>
+</nav>
+<main>
+
+<section id="ciclo">
+  <h2>El ciclo, de un vistazo</h2>
+  <p class="lead">Unos 20 minutos, y casi todo es esperar a la extracción.</p>
+<pre class="plain">1 · PremiumPay   extractor en la consola de Chrome   → premiumpay_….json   (~12 min)
+2 · Quanty       te lo pasan ellos                   → quanty_….json
+3 · Meta Ads     dos exports, uno por cuenta         → 2 archivos .xlsx    (~2 min)
+                        │
+                        ▼
+4 · cargar.html  arrastras los cuatro → Generar                            (~1 min)
+5 · Revisar      la tarjeta «Qué ha salido»                                (~2 min)
+6 · Publicar     un botón. Se despliega solo                               (~1 min)</pre>
+  <div class="box b-stop"><b>Los cuatro archivos tienen que cubrir el mismo rango de fechas.</b>
+    Es el error que más veces rompe un reporte, y no avisa por sí solo.</div>
+  <div class="box b-ok"><b>Ya no hace falta Python, ni terminal, ni subir nada a GitHub a mano.</b>
+    Y los archivos con datos de personas no salen de tu ordenador: <code>cargar.html</code> los procesa
+    en tu propio navegador y solo publica el resumen agregado.</div>
+</section>
+
+<section id="p1">
+  <h2><span class="n">1</span>Extraer PremiumPay <span class="mini">· ~12 min</span></h2>
+  <ol>
+    <li>Chrome → <code>premiumpay.pro/tipster_publicidad_campanias_gestion</code>, con sesión iniciada.
+        Espera a ver la tabla de campañas.</li>
+    <li><b>F12</b> → pestaña <b>Console</b>.</li>
+    <li>Escribe <b>a mano</b> (no vale pegarlo): <code>allow pasting</code> + Enter.</li>
+    <li>Pega el extractor (<a href="#extractor">está abajo, con botón de copiar</a>) + Enter.</li>
+    <li><b>IDs de canal</b> → deja los 14 que vienen por defecto.</li>
+    <li><b>Desde</b> → <code>2026-08-01</code>. <b>Hasta</b> → hoy.</li>
+    <li>Espera sin tocar la pestaña hasta que salga <code>Archivo descargado.</code></li>
+  </ol>
+  <div class="box b-warn"><b><code>allow pasting</code> hay que repetirlo cada vez que se recarga la página.</b>
+    Es donde más gente se atasca.</div>
+
+  <h3>Por qué siempre desde el 1 de agosto</h3>
+  <p>No es comodidad. Tipster Verde y Surebet migraron de PremiumPay a Quanty el <b>22 de agosto</b>,
+     y el panel necesita ver el tramo anterior para saber qué fuente manda en cada fecha.
+     Si acortas el rango, ese tramo se queda sin datos y su CPL desaparece.</p>
+
+  <h3>Lo único que hay que mirar en la consola</h3>
+  <table>
+    <tr><th>Mensaje</th><th>Qué haces</th></tr>
+    <tr><td><b style="color:#188a55">Cuadre OK</b> en verde</td><td>Seguir</td></tr>
+    <tr><td><b style="color:#c8353a">AVISO: diferencia de N entradas</b></td><td>Parar. No uses esos datos</td></tr>
+    <tr><td><code>Canales sin ni un enlace: …</code></td><td>Un ID está mal escrito</td></tr>
+    <tr><td><code>HTTP 403</code></td><td>Sesión caducada: recarga, repite <code>allow pasting</code> y empieza de nuevo</td></tr>
+  </table>
+
+  <h3>Los 14 canales en producción</h3>
+  <table>
+    <tr><th>ID</th><th>Canal</th><th>Prefijo</th><th class="r">Entradas de referencia</th></tr>
+    <tr><td>573</td><td>ID ALL SPORTS</td><td><code>IDALLSPORTS</code></td><td class="r">3.905</td></tr>
+    <tr><td>620</td><td>ALBERTO10 || ANALISTA</td><td><code>ALBERTO10</code></td><td class="r">387</td></tr>
+    <tr><td>698</td><td>Tipster Verde FREE</td><td><code>T.VERDE</code></td><td class="r">136</td></tr>
+    <tr><td>766</td><td>ALBERTO10 || TENIS</td><td><code>A10-DEPORTES</code></td><td class="r">2.703</td></tr>
+    <tr><td>793</td><td>El Crack de las Apuestas Free</td><td><code>ALON</code></td><td class="r">744</td></tr>
+    <tr><td>947</td><td>Gonzalo ASTipsters | FREE</td><td><code>GONZALOAST</code></td><td class="r">836</td></tr>
+    <tr><td>955</td><td>Tipster Verde Free (inglés)</td><td><code>T.GREEN</code></td><td class="r">48</td></tr>
+    <tr><td>1146</td><td>POWERBETS</td><td><code>POWER</code></td><td class="r">3.194</td></tr>
+    <tr><td>1181</td><td>COEBETS</td><td><code>COE</code></td><td class="r">555</td></tr>
+    <tr><td>1229</td><td>NUEVA ERA ESPORTS</td><td><code>JAVIESPORTS</code></td><td class="r">870</td></tr>
+    <tr><td>1246</td><td>DaniBet</td><td><code>DANIANALISTA</code></td><td class="r">675</td></tr>
+    <tr><td>1271</td><td>MARCO APUESTAS</td><td><code>MARCOP</code></td><td class="r">222</td></tr>
+    <tr><td>1273</td><td>RG ANALISTA</td><td><code>RGANALISTA</code></td><td class="r">945</td></tr>
+    <tr><td>1306</td><td>AM ANALISTA</td><td><code>AMANALISTA</code></td><td class="r">355</td></tr>
+  </table>
+  <p class="mini">Entradas del ciclo 01/08 – 15/09/2026, para comparar de un vistazo si algo se ha quedado corto.</p>
+  <div class="box b-info"><b>698 y 955 salen bajos a propósito.</b> Tipster Verde ya está en Quanty:
+    lo que queda en PremiumPay es solo lo anterior al 22/08. Es correcto.</div>
+</section>
+
+<section id="p2">
+  <h2><span class="n">2</span>El archivo de Quanty</h2>
+  <p>Tipster Verde (ES y EN) y Surebet ya no están en PremiumPay. Su extracción la genera Quanty
+     y te la pasan ellos.</p>
+  <div class="box b-warn"><b>Tiene que cubrir el mismo rango que los demás</b>, desde el 1 de agosto.
+    Si te lo mandan solo de la última semana, al generar saldrá este aviso:
+    <pre style="margin:8px 0 0">AVISO: "Tipster Verde (EN)" se queda sin fuente de entradas entre
+el 2026-08-22 y el 2026-09-08: 1390.52 EUR invertidos con 0 entradas.</pre>
+    Cuando salga, pídeselo otra vez con el rango completo. No es un fallo del panel.</div>
+</section>
+
+<section id="p3">
+  <h2><span class="n">3</span>Exportar Meta Ads <span class="mini">· ~2 min</span></h2>
+  <p><b>Son dos exports, uno por cuenta publicitaria.</b></p>
+  <h3>La cuenta principal</h3>
+  <ol>
+    <li>Ads Manager → <b>Ads reporting</b> → informe guardado <b>Tipszum dashboard</b></li>
+    <li>Rango de fechas: <b>el mismo del paso 1</b></li>
+    <li>Pulsa <b>«Ungroup breakdowns»</b> antes de exportar</li>
+    <li>Export → <code>.xlsx</code></li>
+  </ol>
+  <h3>La cuenta de Quanty</h3>
+  <p>Mismo procedimiento en la otra cuenta. Si no lo haces, las campañas de Tipster Verde
+     y Surebet salen con entradas pero sin inversión.</p>
+  <div class="box b-stop"><b>«Ungroup breakdowns» no es opcional.</b> En modo pivot, Meta añade filas
+    de subtotal marcadas como <code>All</code>. Si entran en el Excel, <b>el gasto se cuenta dos veces</b>.</div>
+  <h3>Columnas del informe</h3>
+  <p>Obligatorias: <code>Results</code> · <code>Reach</code> · <code>Amount spent</code> ·
+     <code>Impressions</code> · <code>Link clicks</code> · <code>Clicks (all)</code> ·
+     <code>Landing page views</code>, más <code>Ad set name</code>, <code>Day</code>,
+     <code>Platform</code> y <code>Placement</code>.</p>
+  <table>
+    <tr><th>Columna opcional</th><th>Qué desbloquea</th></tr>
+    <tr><td><code>Delivery status</code></td><td>Qué está activo o pausado de verdad, en vez de deducirlo</td></tr>
+    <tr><td><code>Ad set ID</code></td><td>Cruce por identificador: deja de depender de los nombres</td></tr>
+    <tr><td><code>Ad ID</code></td><td>CPL y ROAS por plantilla creativa en la pestaña Creatividad</td></tr>
+  </table>
+  <p class="mini">Al generar, <code>cargar.html</code> te dice cuáles ha encontrado.</p>
+  <div class="box b-info"><b>Las dos monedas.</b> La cuenta principal factura en USD y la de Quanty en EUR.
+    El panel lo detecta solo y aplica el tipo de cambio únicamente a la parte en dólares.</div>
+</section>
+
+<section id="p4">
+  <h2><span class="n">4</span>Cargar los datos <span class="mini">· ~1 min</span></h2>
+  <ol>
+    <li>Abre <a href="cargar.html">cargar.html</a></li>
+    <li><b>Arrastra los cuatro archivos a la vez.</b> Se reconocen por su contenido, no por el nombre:
+        da igual si se llaman <code>data (3).json</code></li>
+    <li>Comprueba en la tabla que cada uno sale con su etiqueta correcta</li>
+    <li><b>Tipo de cambio</b>: lo fija Oscar cada mes. Si no ha dicho nada, déjalo</li>
+    <li><b>Generar</b></li>
+  </ol>
+  <p class="mini">La primera vez tarda un par de minutos porque el navegador descarga el motor.
+     Queda en caché: a partir de ahí son segundos.</p>
+</section>
+
+<section id="p5">
+  <h2><span class="n">5</span>Revisar antes de publicar <span class="mini">· ~2 min</span></h2>
+  <p class="lead">Este es el paso que no se salta.</p>
+  <h3>Bloqueante · no publiques</h3>
+  <table>
+    <tr><th>Señal</th><th>Qué pasa</th></tr>
+    <tr><td><b>Colisiones ≠ 0</b></td><td>Dos tipsters generan la misma clave</td></tr>
+    <tr><td><b>Un tipster con espacios o con <code>?</code></b></td><td>Un conjunto mal nombrado se ha colado como tipster</td></tr>
+    <tr><td><b>Falta un tipster</b> de los 16</td><td>Problema de nomenclatura</td></tr>
+    <tr><td><b>La inversión no se parece a la de Meta</b></td><td>Falta un Excel, o entraron subtotales <code>All</code></td></tr>
+  </table>
+  <h3>Avisos · se publica igual</h3>
+  <table>
+    <tr><th>Señal</th><th>Qué significa</th></tr>
+    <tr><td><code>N avisos de emparejamiento</code></td><td>Gasto o entradas sin atribuir. Es trabajo de nomenclatura</td></tr>
+    <tr><td><code>se queda sin fuente de entradas entre…</code></td><td>Falta rango en el fichero de Quanty</td></tr>
+    <tr><td><code>Ningún pago en el periodo</code></td><td>Alguna fuente no rellena los pagos por suscriptor</td></tr>
+    <tr><td><code>Facebook e Instagram sin separar</code></td><td>Falta el desglose Platform en el export</td></tr>
+  </table>
+  <h3>Los 16 tipsters que deben salir</h3>
+<pre class="plain">ALBERTO10 || ANALISTA · ALBERTO10 || TENIS · AM ANALISTA · COEBETS · DaniBet
+El Crack de las Apuestas Free · Gonzalo ASTipsters | FREE · ID ALL SPORTS
+MARCO APUESTAS · NUEVA ERA ESPORTS · POWERBETS · RG ANALISTA
+Surebet (EN) · Surebet (ES) · Tipster Verde (EN) · Tipster Verde (ES)</pre>
+  <p>Son 16 y no 14 porque <b>Surebet y Tipster Verde están desdoblados en canal español e inglés</b>.
+     Es a propósito: su CPL es muy distinto.</p>
+</section>
+
+<section id="p6">
+  <h2><span class="n">6</span>Publicar y verificar <span class="mini">· ~1 min</span></h2>
+  <ol>
+    <li><b>Publicar en GitHub</b> — un botón. El token ya está guardado en tu navegador</li>
+    <li>Espera menos de un minuto</li>
+    <li>Abre el panel en <b>ventana de incógnito</b> (<code>Ctrl+Shift+N</code>)</li>
+    <li>Comprueba que el rango de fechas de la cabecera es el tuyo</li>
+  </ol>
+  <div class="box b-info">Si Publicar falla, <b>el trabajo no se pierde</b>: pulsa
+    <b>Descargar data.json</b> y se sube a mano a <code>public/data.json</code> en GitHub.</div>
+</section>
+
+<section id="ajustes">
+  <h2>Objetivos y presupuestos</h2>
+  <p>Van por la pestaña <b>Ajustes</b> del panel, no por <code>cargar.html</code>.</p>
+  <ol>
+    <li>Panel → <b>Ajustes</b></li>
+    <li>Cambia objetivos de CPL, presupuestos, umbrales o estados</li>
+    <li><b>Guardar</b> → se publica para todo el equipo</li>
+  </ol>
+  <p>Tiene que salir <b>«Guardado y publicado para todo el equipo»</b>. Si dice
+     «guardado sólo en este navegador», falta el token: se pega una vez en
+     <a href="cargar.html">cargar.html</a>.</p>
+  <div class="box b-info">Si dos personas editan a la vez, la segunda recibe un aviso y
+    <b>no pisa</b> a la primera. Hay que recargar y volver a aplicar el cambio.</div>
+</section>
+
+<section id="errores">
+  <h2>Errores frecuentes</h2>
+  <table>
+    <tr><th>Síntoma</th><th>Causa</th><th>Solución</th></tr>
+    <tr><td><code>403</code> en el extractor</td><td>Sesión de PremiumPay caducada</td><td>Recargar, repetir <code>allow pasting</code>, empezar de nuevo</td></tr>
+    <tr><td>Cuadre en rojo</td><td>Faltan entradas en la extracción</td><td>Parar. No usar esos datos</td></tr>
+    <tr><td><code>Sigue devolviendo vacio</code></td><td>PremiumPay cambió por dentro</td><td>Copiar la consola y mandarla a Oscar</td></tr>
+    <tr><td>El gasto sale el doble</td><td>Filas de subtotal <code>All</code></td><td>Reexportar con <b>Ungroup breakdowns</b></td></tr>
+    <tr><td><code>Feed</code> sin separar FB/IG</td><td>Export sin desglose <code>Platform</code></td><td>Reexportar</td></tr>
+    <tr><td>Un canal con 0 entradas</td><td>Su ID no entró en el prompt</td><td>Repetir con los 14 IDs</td></tr>
+    <tr><td>Entradas sin gasto</td><td>Falta el Excel de esa cuenta</td><td>Exportar también la otra cuenta</td></tr>
+    <tr><td><code>No reconocido</code> al arrastrar</td><td>Un <code>.json</code> que no es una extracción</td><td>Comprobar que no es el <code>data.json</code> ni el <code>config.json</code></td></tr>
+    <tr><td><code>403</code> al publicar</td><td>Token con <code>Contents</code> en <i>Read-only</i></td><td>Cambiarlo a <b>Read and write</b> en GitHub</td></tr>
+    <tr><td>Datos viejos en el panel</td><td>Caché del navegador</td><td>Ventana de incógnito</td></tr>
+    <tr><td>Un tipster raro con espacios</td><td>Conjunto de Meta sin <code>_</code> en el nombre</td><td>Avisar a Oscar: es una línea en <code>build.py</code></td></tr>
+  </table>
+  <div class="box b-warn"><b>Si el error no está aquí, no improvises.</b> Captura de pantalla y a Oscar.</div>
+</section>
+
+<section id="reglas">
+  <h2>Reglas que no se rompen</h2>
+  <ul>
+    <li><b>CPL = Inversión / Entradas reales de Telegram.</b> Nunca Inversión / Leads. Un lead de Meta
+        es una conversión que Meta se atribuye, no una persona en el canal.</li>
+    <li><b>ROAS por cohorte de entrada</b>, no por fecha de pago. El ROAS de un mes reciente siempre
+        parece bajo y sube con el tiempo. No es un error.</li>
+    <li><b>Nada de ROAS diario.</b> Menos del 1% paga; un solo pagador desvirtúa el día.</li>
+    <li><b>Nada de CPL diario en canales de aprobación manual.</b> El 65% de los enlaces aprueba
+        a mano y por lotes: media móvil de 3 a 7 días.</li>
+    <li><b>Los ingresos ya vienen en euros.</b> El tipo de cambio solo toca la inversión de Meta.</li>
+    <li><b>Nunca cambies el país de un conjunto activo.</b> Corrompe la agregación del gasto y reinicia
+        el aprendizaje. Duplicar → renombrar → crear el enlace → pausar el original.</li>
+  </ul>
+  <h3>No todo lo que cae en «Genérico» es un problema</h3>
+  <p>De las entradas sin conjunto, la mayoría <b>es correcto que estén ahí</b>: tráfico de TikTok
+     (<code>Enlace tktk</code>), enlaces de personas (<code>Iker Power</code>), genéricos
+     (<code>Genérico Agosto 26</code>). No vienen de un anuncio de Meta, así que no deben tener CPL.</p>
+  <p>Lo que sí hay que arreglar son los enlaces que <b>sí</b> llevan tráfico de Meta y están mal
+     nombrados: <code>2KR</code>, <code>Enlace Insta trackeado</code>, <code>FB Septiembre 2026</code>.
+     La convención es <code>TIPSTER_PAIS_SEGMENTO_MESAAAA</code>.</p>
+</section>
+
+<section id="nombres">
+  <h2>Nomenclatura de enlaces</h2>
+  <p>El panel no sabe qué anuncio trajo a una persona: lo deduce <b>comparando el nombre del enlace
+     de Telegram con el nombre del conjunto de Meta</b>. Si los dos nombres coinciden, la entrada
+     tiene CPL. Si no coinciden, la entrada cae en <span class="tag">Genérico</span> y el gasto de
+     ese conjunto sale como <i>invertido sin entradas atribuibles</i>. Todo el sistema de atribución
+     descansa en esta convención.</p>
+
+  <div class="box b-ok">
+    <b>La convención</b><br>
+    <code>PREFIJO_PAIS_SEGMENTO_MESAAAA</code><br>
+    <span class="mini">Campos separados por guion bajo. Sin espacios dentro de un campo.</span>
+  </div>
+
+  <table>
+    <thead><tr><th>Campo</th><th>Qué es</th><th>Ejemplos válidos</th></tr></thead>
+    <tbody>
+      <tr><td><b>PREFIJO</b></td><td>El tipster. Siempre el mismo, sin espacios. Es lo que identifica
+          de quién es el tráfico.</td><td><code>VERDE</code> · <code>GREEN</code> · <code>SBFREE</code> ·
+          <code>POWER</code> · <code>GONZALOAST</code></td></tr>
+      <tr><td><b>PAIS</b></td><td>Código de 3 letras del mercado.</td>
+          <td><code>ESP</code> · <code>USA</code> · <code>MEX</code> · <code>CAN</code> ·
+          <code>GRB</code> · <code>SLV</code> · <code>AUS</code> · <code>LATAM</code></td></tr>
+      <tr><td><b>SEGMENTO</b></td><td>La audiencia o el ángulo. Puede llevar varios campos.</td>
+          <td><code>BBDD</code> · <code>ABIERTO</code> · <code>APU</code> · <code>LOOKALIKE</code></td></tr>
+      <tr><td><b>MESAAAA</b></td><td>Opcional. El panel lo <b>ignora</b>, así que puedes cambiar el mes
+          sin romper nada.</td><td><code>AGO2026</code> · <code>SEP2026</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Lo que el panel ignora al comparar</h3>
+  <p>No hace falta que los dos nombres sean idénticos carácter a carácter. Antes de comparar, el panel
+     limpia ambos lados: pasa todo a mayúsculas, quita espacios sobrantes, y <b>descarta</b> los campos
+     de mes (<code>AGO2026</code>) y las palabras de relleno <code>PRO</code> e <code>INTERESES</code>.
+     Es decir, <code>VERDE_ESP_BBDD_AGO2026</code> y <code>verde_esp_bbdd_sep2026</code> cruzan igual.</p>
+
+  <div class="box b-warn">
+    <b>Lo que sí rompe el cruce</b>
+    <ul>
+      <li><b>Espacios en vez de guiones bajos.</b> <code>Surebet Free ESP</code> no tiene campos:
+          el panel lo lee entero como un nombre de canal y no lo cruza con nada.</li>
+      <li><b>Prefijos distintos en cada lado.</b> Si Meta dice <code>SBFREE_</code> y el enlace dice
+          <code>SUREBET_</code>, son dos tipsters distintos para el panel.</li>
+      <li><b>Un campo de más o de menos.</b> <code>VERDE_ESP_BBDD</code> y
+          <code>VERDE_ESP_BBDD_FRIO</code> son dos claves diferentes.</li>
+      <li><b>Nombres libres.</b> <code>2KR</code>, <code>Enlace Insta trackeado</code>,
+          <code>FB Septiembre 2026</code>. Todos van a Genérico.</li>
+    </ul>
+  </div>
+
+  <h3>Quanty: hoy el cruce es por nombre</h3>
+  <p>Quanty puede mandar el <code>meta_adset_id</code> de cada suscriptor, y entonces el cruce se haría
+     por identificador y daría igual cómo se llamen las cosas. <b>Hoy eso no está disponible</b>, así
+     que Quanty cruza exactamente igual que PremiumPay: por nombre. No es un problema — el panel está
+     construido así desde el principio y el identificador es solo una mejora encima.</p>
+  <p>Consecuencia práctica: <b>los enlaces que se creen en Quanty tienen que seguir esta misma
+     convención</b> y el prefijo tiene que ser el que ya usa Meta. Si Quanty crea un enlace con nombre
+     libre, sus entradas se pierden en Genérico y su conjunto de Meta aparece con gasto y cero entradas.</p>
+  <table>
+    <thead><tr><th>Conjunto en Meta</th><th>Enlace en Quanty</th><th>Resultado</th></tr></thead>
+    <tbody>
+      <tr><td><code>VERDE_ESP_BBDD_SEP2026</code></td><td><code>VERDE_ESP_BBDD</code></td>
+          <td><span class="tag ok">Cruza</span> el mes se ignora</td></tr>
+      <tr><td><code>SBFREE_USA_ABIERTO</code></td><td><code>SBFREE_USA_ABIERTO_SEP2026</code></td>
+          <td><span class="tag ok">Cruza</span></td></tr>
+      <tr><td><code>SBFREE_USA_ABIERTO</code></td><td><code>Surebet FREE EN</code></td>
+          <td><span class="tag bad">Genérico</span> nombre libre</td></tr>
+      <tr><td><code>GREEN_USA_BBDD</code></td><td><code>VERDE_USA_BBDD</code></td>
+          <td><span class="tag bad">Otro tipster</span> prefijo distinto</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Cuando hay que renombrar un conjunto de Meta</h3>
+  <div class="box b-stop">
+    <b>Nunca renombres ni cambies el país de un conjunto que está activo y gastando.</b>
+    Corrompe la agregación histórica del gasto y reinicia el aprendizaje del anuncio.
+    <br><br>
+    El procedimiento es: <b>duplicar</b> el conjunto → <b>renombrar</b> la copia con la convención →
+    <b>crear el enlace</b> en Telegram con ese mismo nombre → <b>lanzar</b> la copia →
+    <b>pausar</b> el original. El histórico del original se queda como está, correcto.
+  </div>
+
+  <h3>Si un prefijo ya está escrito de dos formas</h3>
+  <p>Cuando un tipster lleva meses usando <code>POWERBETS</code> en Meta y <code>POWER</code> en los
+     enlaces, no hace falta renombrar nada del histórico: se añade una equivalencia en
+     <code>build.py</code> (la tabla <code>PREF_ALIAS</code>) y el panel los une. Eso lo hace Oscar.
+     <b>Avísale en vez de renombrar</b>: renombrar rompe el histórico, la equivalencia no.</p>
+</section>
+
+<section id="parar">
+  <h2>Cuándo parar y llamar a Oscar</h2>
+  <div class="box b-stop">
+    <ul style="margin:0">
+      <li>Cuadre del extractor en <b>rojo</b></li>
+      <li><b>Colisiones ≠ 0</b></li>
+      <li>Falta un tipster, o sale uno con espacios o <code>?</code></li>
+      <li><code>Sigue devolviendo vacio</code> en el extractor</li>
+      <li>La inversión total no se parece a la de Meta</li>
+      <li>Un error que no está en la tabla de arriba</li>
+    </ul>
+  </div>
+  <p><b>No es motivo de parada:</b> que la extracción tarde, que haya avisos de emparejamiento,
+     que el rango salga más corto si no había datos, o que el ROAS reciente parezca bajo.</p>
+</section>
+
+<section id="extractor">
+  <h2>El extractor</h2>
+  <p class="lead">Pégalo en la consola de Chrome después de escribir <code>allow pasting</code> a mano.</p>
+  <button class="btn noprint" id="cp">Copiar el extractor</button>
+  <span class="mini noprint" id="cpmsg" style="margin-left:10px"></span>
+  <pre id="ext">// ===== EXTRACTOR PREMIUMPAY · rev. 15/09/2026 =====
+// Pegar en la consola de Chrome (F12 -&gt; Console) en campanias gestionadas.
+// Antes escribe A MANO:  allow pasting
+//
+// Canales en produccion (14):
+//   573  ID ALL SPORTS                 947  Gonzalo ASTipsters | FREE
+//   620  ALBERTO10 || ANALISTA         955  Tipster Verde Free (canal ingles)
+//   698  Tipster Verde FREE           1146  POWERBETS
+//   766  ALBERTO10 || TENIS           1181  COEBETS
+//   793  El Crack de las Apuestas     1229  NUEVA ERA ESPORTS
+//  1246  DaniBet                      1271  MARCO APUESTAS
+//  1273  RG ANALISTA                  1306  AM ANALISTA
+//
+// La fecha de inicio por defecto es el 1 de agosto de 2026 a proposito: es el
+// arranque del historico que mide el panel. Tipster Verde y Surebet migraron a
+// Quanty el 22/08, y build.py necesita ver el tramo anterior para saber que fuente
+// manda en cada fecha. Si acortas el rango, ese tramo se queda sin datos.
+(async()=&gt;{
+const sleep=ms=&gt;new Promise(r=&gt;setTimeout(r,ms));
+const post=async(url,body)=&gt;{
+  const r=await fetch(url,{method:&#x27;POST&#x27;,credentials:&#x27;same-origin&#x27;,
+    headers:{&#x27;Content-Type&#x27;:&#x27;application/x-www-form-urlencoded&#x27;,&#x27;X-Requested-With&#x27;:&#x27;XMLHttpRequest&#x27;},
+    body:new URLSearchParams(body)});
+  if(!r.ok)throw new Error(url+&#x27; -&gt; HTTP &#x27;+r.status);
+  return r.json();
+};
+const filas=j=&gt;j.aaData||j.data||[];
+
+// --- cuerpo exacto que envia la pagina (capturado del propio DataTables) ---
+const COLS=[&#x27;telegram_userid&#x27;,&#x27;fecha_entrada&#x27;,&#x27;fecha_salida&#x27;,&#x27;pagos_num&#x27;,&#x27;pagos_importe&#x27;];
+function cuerpoEntradas(idenlace,start,length){
+  const b={draw:1};
+  COLS.forEach((c,i)=&gt;{
+    b[`columns[${i}][data]`]=c; b[`columns[${i}][name]`]=&#x27;&#x27;;
+    b[`columns[${i}][searchable]`]=&#x27;true&#x27;; b[`columns[${i}][orderable]`]=&#x27;true&#x27;;
+    b[`columns[${i}][search][value]`]=&#x27;&#x27;; b[`columns[${i}][search][regex]`]=&#x27;false&#x27;;
+  });
+  b[&#x27;order[0][column]&#x27;]=&#x27;1&#x27;; b[&#x27;order[0][dir]&#x27;]=&#x27;asc&#x27;;
+  b.start=start; b.length=length;
+  b[&#x27;search[value]&#x27;]=&#x27;&#x27;; b[&#x27;search[regex]&#x27;]=&#x27;false&#x27;;
+  b.idenlace=idenlace; b.fechaInicio=&#x27;&#x27;; b.fechaFin=&#x27;&#x27;;
+  return b;
+}
+
+const sel=prompt(&#x27;IDs de canal, separados por coma&#x27;,
+  &#x27;573,620,698,766,793,947,955,1146,1181,1229,1246,1271,1273,1306&#x27;); if(!sel)return;
+const ids=sel.split(&#x27;,&#x27;).map(x=&gt;x.trim()).filter(Boolean);
+const D=prompt(&#x27;Desde (AAAA-MM-DD)&#x27;,&#x27;2026-08-01&#x27;); if(!D)return;
+const H=prompt(&#x27;Hasta (AAAA-MM-DD)&#x27;,new Date().toISOString().slice(0,10)); if(!H)return;
+const FI=D+&#x27;T00:00&#x27;,FF=H+&#x27;T23:59&#x27;;
+
+// ---------- 1. enlaces ----------
+const OUT={rango:{desde:D,hasta:H},generado:new Date().toISOString(),canales:[],suscriptores:[]};
+for(const idc of ids){
+  const le=await post(&#x27;/tipster_ajax_pb_get_enlacescanal_paginated&#x27;,
+    {idcanal:idc,fechaInicio:FI,fechaFin:FF,consolidate:&#x27;false&#x27;,draw:1,start:0,length:1000,
+     &#x27;search[value]&#x27;:&#x27;&#x27;,&#x27;search[regex]&#x27;:&#x27;false&#x27;});
+  const enl=filas(le);
+  const nom=((enl[0]&amp;&amp;enl[0].telegram_namecanal)||(&#x27;Canal &#x27;+idc)).replace(/[\s.|]+$/,&#x27;&#x27;).trim();
+  OUT.canales.push({tipster:nom,idcanal:+idc,enlaces:enl});
+  console.log(`Canal ${idc} (${nom}): ${enl.length} enlaces`);
+  await sleep(200);
+}
+const L=[];
+OUT.canales.forEach(c=&gt;c.enlaces.forEach(e=&gt;{
+  if(e.idtelegram_publi_enlace)L.push({id:e.idtelegram_publi_enlace,nombre:e.nombre,
+    canal:c.idcanal,tipster:c.tipster,esperadas:+(e.entradas_total||0)});
+}));
+const CON=L.filter(x=&gt;x.esperadas&gt;0);
+const ESP=CON.reduce((a,x)=&gt;a+x.esperadas,0);
+console.log(`${L.length} enlaces · ${CON.length} con entradas en el periodo · ${ESP} entradas esperadas`);
+if(!CON.length){console.warn(&#x27;Nada que extraer.&#x27;);return}
+
+// ---------- 2. extraer (la ventana no filtra por fecha: filtramos aqui) ----------
+console.log(&#x27;%cExtrayendo... (la API devuelve el historico completo de cada enlace y se filtra por fecha aqui)&#x27;,&#x27;font-weight:bold;color:#1e3a6e&#x27;);
+const dentro=f=&gt;{const s=String(f||&#x27;&#x27;).slice(0,10);return s&gt;=D&amp;&amp;s&lt;=H};
+let bruto=0;
+for(let i=0;i&lt;CON.length;i++){
+  const x=CON[i]; let start=0, n=0;
+  while(true){
+    const j=await post(&#x27;/tipster_ajax_listado_entradas&#x27;,cuerpoEntradas(x.id,start,1000));
+    const rows=filas(j);
+    if(start===0&amp;&amp;i===0&amp;&amp;!rows.length){
+      console.error(&#x27;Sigue devolviendo vacio. Copia esto y mandaselo a Oscar:&#x27;);
+      console.log(JSON.stringify(j).slice(0,1200)); return;
+    }
+    rows.forEach(r=&gt;{
+      bruto++;
+      if(dentro(r.fecha_entrada))
+        OUT.suscriptores.push({...r,idcanal:x.canal,tipster:x.tipster,idenlace:x.id,nombre_enlace:x.nombre});
+    });
+    n+=rows.length;
+    const tot=+(j.iTotalRecords||j.iTotalDisplayRecords||0);
+    if(rows.length&lt;1000||(tot&amp;&amp;n&gt;=tot))break;
+    start+=1000; await sleep(250);
+  }
+  if((i+1)%5===0||i===CON.length-1)
+    console.log(`  ${i+1}/${CON.length} · ${OUT.suscriptores.length} en rango (${bruto} revisadas)`);
+  await sleep(250);
+}
+
+// ---------- 3. cuadre ----------
+const got=OUT.suscriptores.length;
+const pagos=OUT.suscriptores.reduce((a,r)=&gt;a+(+r.pagos_num||0),0);
+console.log(&#x27;%c=== LISTO ===&#x27;,&#x27;font-size:14px;font-weight:bold;color:#188a55&#x27;);
+console.log(`Suscriptores en rango: ${got} | Esperados segun la API: ${ESP} | Filas revisadas: ${bruto}`);
+console.log(`Pagos: ${pagos}`);
+if(got===ESP)console.log(&#x27;%cCuadre OK&#x27;,&#x27;color:#188a55;font-weight:bold;font-size:13px&#x27;);
+else console.log(`%cAVISO: diferencia de ${Math.abs(ESP-got)} entradas. Revisar antes de usar los datos.`,&#x27;color:#c8353a;font-weight:bold&#x27;);
+
+// ---------- 4. canales que faltan ----------
+// Si pediste un canal y vino vacio, casi siempre es que el ID esta mal o que el
+// canal no tuvo entradas en el rango. Mejor saberlo aqui que descubrirlo al cuadrar.
+const vacios=OUT.canales.filter(c=&gt;!c.enlaces.length).map(c=&gt;c.idcanal);
+if(vacios.length)console.warn(&#x27;Canales sin ni un enlace: &#x27;+vacios.join(&#x27;, &#x27;)+&#x27; - revisa que el ID sea correcto.&#x27;);
+
+const a=document.createElement(&#x27;a&#x27;);
+a.href=URL.createObjectURL(new Blob([JSON.stringify(OUT)],{type:&#x27;application/json&#x27;}));
+a.download=&#x27;premiumpay_&#x27;+D+&#x27;_&#x27;+H+&#x27;.json&#x27;;
+document.body.appendChild(a);a.click();a.remove();
+console.log(&#x27;Archivo descargado.&#x27;);
+})();
+</pre>
+</section>
+
+<section id="checklist">
+  <h2>Checklist</h2>
+  <p class="lead noprint">Para imprimir o tener al lado. <button class="btn" onclick="window.print()">Imprimir</button></p>
+  <div class="chk">
+    <h4>1 · PremiumPay</h4>
+    <ul>
+      <li>F12 → Console → escribir <b>a mano</b> <code>allow pasting</code></li>
+      <li>Pegar el extractor → Enter</li>
+      <li>IDs: dejar los 14 · Desde: <b>2026-08-01</b> · Hasta: hoy</li>
+      <li class="sub">¿<b>Cuadre OK</b> en verde? Si está en rojo → PARAR</li>
+    </ul>
+    <h4>2 · Quanty</h4>
+    <ul>
+      <li>Tener su <code>.json</code> del <b>mismo rango</b></li>
+    </ul>
+    <h4>3 · Meta Ads</h4>
+    <ul>
+      <li>Informe <b>Tipszum dashboard</b> · solo cambiar fechas</li>
+      <li>Pulsar <b>Ungroup breakdowns</b> → Export .xlsx</li>
+      <li>Repetir en la <b>cuenta de Quanty</b></li>
+    </ul>
+    <h4>4 · Cargar</h4>
+    <ul>
+      <li>Arrastrar los <b>cuatro</b> archivos → Generar</li>
+    </ul>
+    <h4>5 · Revisar</h4>
+    <ul>
+      <li class="sub">¿Salen los <b>16 tipsters</b>, ninguno raro?</li>
+      <li class="sub">¿<b>Colisiones = 0</b>?</li>
+      <li class="sub">¿La inversión se parece a la de Meta?</li>
+    </ul>
+    <h4>6 · Publicar</h4>
+    <ul>
+      <li>Publicar en GitHub</li>
+      <li>Abrir el panel en <b>incógnito</b> y comprobar el rango</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+</div>
+<script>
+/* Copiar el extractor sin que Sofía tenga que seleccionarlo a mano. */
+document.getElementById('cp').onclick=()=>{
+  navigator.clipboard.writeText(document.getElementById('ext').textContent)
+    .then(()=>{const m=document.getElementById('cpmsg');m.textContent='Copiado — ahora pégalo en la consola';
+      setTimeout(()=>m.textContent='',3000)})
+    .catch(()=>{document.getElementById('cpmsg').textContent='No se ha podido copiar: selecciónalo a mano'});
+};
+/* Marca en el índice la sección que estás leyendo. */
+const links=[...document.querySelectorAll('#nav a')];
+const secs=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting){
+    const i=secs.indexOf(e.target);
+    links.forEach((a,j)=>a.classList.toggle('on',j===i));
+  }});
+},{rootMargin:'-90px 0px -70% 0px'});
+secs.forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>

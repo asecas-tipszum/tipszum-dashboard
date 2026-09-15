@@ -63,6 +63,26 @@ CANAL_PREF = {
     'Tipster Verde': 'T.VERDE',   # respaldo: sus enlaces se resuelven uno a uno
 }
 
+# ---------- desdoblar un tipster en varios ----------
+# Surebet tiene DOS canales de Telegram (español e inglés) bajo un mismo prefijo
+# en Meta (SBFREE). Sus enlaces de Quanty no llevan el nombre del conjunto, asi
+# que no hay forma de cruzarlos uno a uno, pero si de separarlos por idioma:
+#   · lado Meta     -> el pais del nombre del conjunto (ESP/SLV = ES, UK/CA/US = EN)
+#   · lado entradas -> como se llama el enlace ("Surebet FREE EN" / "Free ESP"),
+#                      y si no dice nada, el mercado que declara Quanty
+# El mapa de pais es POR TIPSTER a proposito: para Surebet USA es el canal ingles,
+# pero para Tipster Verde USA es el canal español (hispanos en EE.UU.).
+SPLIT = {
+    'SB': {
+        'nombre':  {'SB.ES': 'Surebet (ES)', 'SB.EN': 'Surebet (EN)'},
+        'pais':    {'ESP': 'SB.ES', 'SLV': 'SB.ES', 'LATAM': 'SB.ES', 'MEX': 'SB.ES', 'PER': 'SB.ES',
+                    'GRB': 'SB.EN', 'CAN': 'SB.EN', 'USA': 'SB.EN', 'AUS': 'SB.EN'},
+        'enlace':  [('FREE EN', 'SB.EN'), ('FREE ESP', 'SB.ES'),
+                    ('COMBINED', 'SB.EN'), ('FIRST BET', 'SB.EN'), ('GOLDEN', 'SB.EN')],
+        'defecto': 'SB.ES',   # los VIP y packs tienen nombre en español
+    },
+}
+
 CORTE = {
     'T.VERDE': ('2026-08-22', 'quanty'),
     'T.GREEN': ('2026-08-22', 'quanty'),
@@ -383,6 +403,26 @@ if CORTE:
         s = s[~_drop].reset_index(drop=True)
         print(f'corte de fuentes: {_n0} -> {len(s)} entradas (evita duplicar el tramo solapado)')
 
+# ── Desdoblar tipsters (ver SPLIT arriba) ─────────────────────────────────
+# Va DESPUES del corte a proposito: el corte usa el prefijo original ('SB').
+for _p, _cfg in SPLIT.items():
+    _enMeta = (df.pref == _p); _enEnt = (s.pref == _p)
+    if not _enMeta.any() and not _enEnt.any(): continue
+    if _enMeta.any():
+        df.loc[_enMeta, 'pref'] = df.loc[_enMeta, 'pais'].map(_cfg['pais']).fillna(_cfg['defecto'])
+    if _enEnt.any():
+        def _lado(nom, mkt):
+            t = str(nom).upper()
+            for _frag, _dest in _cfg['enlace']:
+                if _frag.upper() in t: return _dest
+            return _cfg['pais'].get(str(mkt).strip().upper(), _cfg['defecto'])
+        s.loc[_enEnt, 'pref'] = [_lado(n, m) for n, m in zip(s.loc[_enEnt].nombre_enlace, s.loc[_enEnt].mkt)]
+    NOMBRE.pop(_p, None)
+    for _k, _v in _cfg['nombre'].items(): NOMBRE[_k] = _v
+    _rep = dict(s[s.pref.isin(_cfg['nombre'])].pref.value_counts())
+    _gas = {k: round(eur(df[df.pref == k]), 2) for k in _cfg['nombre']}
+    print(f'  desdoblado "{_p}": entradas {_rep} · inversión {_gas}')
+
 s['tname'] = s.pref.map(NOMBRE)
 print('Tipsters detectados:', NOMBRE)
 
@@ -610,6 +650,29 @@ if pend:
     print(f'cola de aprobacion: {_tp} pendientes sobre {_ts} solicitudes de por vida ({_tp/_ts*100:.1f}% sin aprobar)' if _ts else 'cola de aprobacion: sin datos')
 else:
     print('cola de aprobacion: el .json no trae "pendientes" (extractor antiguo) - el panel lo dira')
+
+# ── Hueco entre fuentes ───────────────────────────────────────────────────
+# El corte descarta la fuente antigua a partir de una fecha. Si la extraccion de
+# la fuente nueva empieza DESPUES de esa fecha, en medio queda una ventana con
+# inversion de Meta y ninguna fuente de entradas: CPL vacio y conjuntos que
+# parecen no convertir. Es el fallo mas facil de pasar por alto, asi que se avisa.
+for _p, (_fec, _nueva) in CORTE.items():
+    if _p not in NOMBRE: continue
+    _sub = s[(s.pref == _p) & (s.fuente == _nueva)]
+    if not len(_sub):
+        print(f'AVISO: "{NOMBRE[_p]}" tiene corte el {_fec} hacia {_nueva}, pero no hay ni una '
+              f'entrada de {_nueva}. Falta su fichero, o no cubre este periodo.')
+        continue
+    _ini = _sub.dia.min()
+    if _ini > _fec:
+        _hu = D[(D.pref == _p) & (D.dia >= _fec) & (D.dia < _ini)]
+        _g = float((pd.to_numeric(_hu.gasto_usd, errors='coerce').fillna(0)
+                    * np.where(_hu.moneda.astype(str).str.upper() == 'EUR', 1.0, FX)).sum())
+        if _g > 1:
+            print(f'AVISO: "{NOMBRE[_p]}" se queda sin fuente de entradas entre el {_fec} y el {_ini}: '
+                  f'{_g:.2f} EUR invertidos con {int(_hu.entradas.sum())} entradas. El corte descarta '
+                  f'PremiumPay desde el {_fec} y la extraccion de {_nueva} empieza el {_ini}. '
+                  f'Pide a {_nueva} una extraccion que arranque el {_fec} o antes.')
 
 out = dict(version=2, fx=FX, fx_fecha=FX_FECHA, fx_fuente='Wise (mid-market)',
            generado=datetime.now().strftime('%Y-%m-%d %H:%M'),

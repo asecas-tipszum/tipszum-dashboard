@@ -1641,15 +1641,23 @@ function cierre(){
   const rows=D.filter(r=>r.dia>=cf&&r.dia<=ct&&(!ST.tip||r.tipster===ST.tip)&&(!ST.pais||r.pais===ST.pais));
   const key=r=>CMG==='tipster'?r.tipster:(CMG==='pais'?(r.pais||'—'):r.grupo);
   const o={};
-  rows.forEach(r=>{const isSin=r.grupo===SIN;const k=isSin&&CMG!=='conj'?SIN:key(r);
-    o[k]=o[k]||{k,gasto:0,entradas:0,ingresos:0,sin:isSin};
-    o[k].gasto+=gEur(r);o[k].entradas+=r.entradas;o[k].ingresos+=r.ingresos});
+  /* FIX: antes las entradas sin conjunto de TODOS los tipsters se amontonaban en
+     una sola fila "Genérico", así que cada tipster salía con menos entradas de las
+     que tuvo y alguno con cero. El cierre es lo que ve el cliente: pagó X y entró
+     Y gente, venga del conjunto que venga. Ahora cada entrada va a su tipster y
+     se anota aparte cuántas no tienen conjunto, que es la calidad de atribución.
+     Agrupando POR CONJUNTO el Genérico sí es un grupo real y se queda como fila. */
+  rows.forEach(r=>{const isSin=r.grupo===SIN;const k=CMG==='conj'?key(r):key(r);
+    o[k]=o[k]||{k,gasto:0,entradas:0,ingresos:0,sin:CMG==='conj'&&isSin,sinEnt:0};
+    o[k].gasto+=gEur(r);o[k].entradas+=r.entradas;o[k].ingresos+=r.ingresos;
+    if(isSin)o[k].sinEnt+=r.entradas});
   let data=Object.values(o).sort((a,b)=>a.sin?1:b.sin?-1:b.gasto-a.gasto);
   const tot=data.reduce((a,r)=>({gasto:a.gasto+r.gasto,entradas:a.entradas+r.entradas,ingresos:a.ingresos+r.ingresos}),{gasto:0,entradas:0,ingresos:0});
   const H=[CMG==='tipster'?'Tipster':(CMG==='pais'?'País':'Conjunto'),'Inversión (€)','Entradas','CPL (€)','Ventas (€)','Retorno'];
   const T=document.getElementById('cm-t'),r2=n=>(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
   T.querySelector('thead').innerHTML='<tr>'+H.map(h=>`<th>${h}</th>`).join('')+'</tr>';
-  T.querySelector('tbody').innerHTML=data.map(d=>`<tr class="${d.sin?'sin':''}"><td class="nm">${esc(d.k)}</td>
+  T.querySelector('tbody').innerHTML=data.map(d=>`<tr class="${d.sin?'sin':''}"><td class="nm">${esc(d.k)}${
+    d.sinEnt&&!d.sin?` <span class="chip ch-dor" title="Entradas cuyo enlace de PremiumPay no casa con ningún conjunto de Meta">${nf(d.sinEnt)} sin conjunto</span>`:''}</td>
     <td>${r2(d.gasto)} €</td><td>${nf(d.entradas)}</td>
     <td>${d.gasto&&d.entradas?r2(d.gasto/d.entradas)+' €':'—'}</td>
     <td>${r2(d.ingresos)} €</td><td>${d.gasto?r2(d.ingresos/d.gasto):'—'}</td></tr>`).join('');
@@ -1658,7 +1666,9 @@ function cierre(){
   const et=CMP==='semana'&&CMS?`Semana del ${etiqSem(CMS)} (${cf} a ${ct})`:(CMP==='mes'?`Mes de ${ct.slice(0,7)}`:`Periodo ${cf} a ${ct}`);
   document.getElementById('cm-h').textContent=CMP==='semana'?'Cierre de semana':(CMP==='mes'?'Cierre de mes':'Cierre del periodo');
   document.getElementById('cm-sub').textContent=et+' · cohorte por fecha de entrada';
-  document.getElementById('cm-fx').textContent=`Inversión convertida de USD a EUR al tipo 1 USD = ${FX.toLocaleString('es-ES',{minimumFractionDigits:4})} EUR (${DATA.fx_fuente}, ${DATA.fx_fecha}). CPL = Inversión / Entradas. Retorno = Ventas / Inversión.`;
+  const nSin=data.reduce((a,d)=>a+(d.sin?0:(d.sinEnt||0)),0);
+  document.getElementById('cm-fx').innerHTML=`Inversión convertida de USD a EUR al tipo 1 USD = ${FX.toLocaleString('es-ES',{minimumFractionDigits:4})} EUR (${esc(DATA.fx_fuente)}, ${esc(DATA.fx_fecha)}). CPL = Inversión / Entradas. Retorno = Ventas / Inversión.`
+    +(nSin?` <b>${nf(nSin)} de las ${nf(tot.entradas)} entradas</b> vienen de enlaces de PremiumPay que no casan con ningún conjunto de Meta: cuentan para su tipster y para el total, pero no tienen un conjunto al que atribuirlas. Se marcan en cada fila.`:'');
   window.__cm={data,tot,H,et,cf,ct};
 }
 function cmExp(kind){const{data,tot,H,et,cf,ct}=window.__cm,r2=n=>(n||0).toFixed(2).replace('.',',');

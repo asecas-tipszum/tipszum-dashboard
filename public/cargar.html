@@ -33,6 +33,7 @@ tr:last-child td{border-bottom:0}
 button{font:inherit;border:0;border-radius:7px;padding:9px 16px;cursor:pointer;font-weight:650}
 .b1{background:var(--navy);color:#fff}.b1:disabled{background:#aab4c4;cursor:not-allowed}
 .b2{background:#fff;color:var(--navy);border:1px solid #c4d0e4}
+.b2:disabled{color:#aab4c4;border-color:#dfe5ee;cursor:not-allowed}
 .b3{background:var(--green);color:#fff}.b3:disabled{background:#aab4c4;cursor:not-allowed}
 .bx{background:#fff;color:var(--red);border:1px solid #e8b9bb;padding:5px 10px;font-size:12.5px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -110,11 +111,12 @@ code{background:#eef2f8;padding:1px 5px;border-radius:4px;font-size:12.5px}
 </div>
 
 <!-- 4 · publicar -->
-<div class="card hide" id="pub">
+<div class="card" id="pub">
   <h2><span class="n">4</span>Publicar</h2>
-  <p class="sub">Descárgalo y súbelo tú, o publícalo directo en GitHub y que Cloudflare lo despliegue solo.</p>
+  <p class="sub">Descárgalo y súbelo tú, o publícalo directo en GitHub y que Cloudflare lo despliegue solo.
+     Los botones se activan cuando hayas generado el <code>data.json</code>, pero el token puedes dejarlo puesto ya.</p>
   <div class="row">
-    <button class="b2" id="dl">Descargar data.json</button>
+    <button class="b2" id="dl" disabled>Descargar data.json</button>
     <button class="b3" id="push" disabled>Publicar en GitHub</button>
   </div>
   <details style="margin-top:14px" id="ghbox"><summary>Ajustes de GitHub y token</summary>
@@ -128,6 +130,7 @@ code{background:#eef2f8;padding:1px 5px;border-radius:4px;font-size:12.5px}
       <input type="password" id="gh-tok" placeholder="github_pat_..."></div>
     <div class="row" style="margin-top:10px">
       <button class="b2" id="gh-save">Guardar en este navegador</button>
+      <button class="b2" id="gh-test">Probar token</button>
       <button class="bx" id="gh-clear">Borrar el token</button>
       <span class="mini" id="gh-est"></span></div>
     <p class="mini" style="margin:10px 0 0">El token se queda en <code>localStorage</code> de tu navegador y no viaja a ningún
@@ -263,7 +266,7 @@ async function fuente(){
   return await r.text();
 }
 $('go').onclick=async()=>{
-  $('go').disabled=true;$('res').classList.add('hide');$('pub').classList.add('hide');
+  $('go').disabled=true;$('res').classList.add('hide');$('dl').disabled=true;$('push').disabled=true;
   try{
     const py=await arranca();
     msg('g-msg','m-w','<span class="spin"></span>Ejecutando build.py…');
@@ -275,7 +278,7 @@ $('go').onclick=async()=>{
     const res=JSON.parse(await py.runPythonAsync(RUNNER));
     $('log').textContent=(res.log||'')+(res.err?'\n\n--- ERROR ---\n'+res.err:'');
     if(!res.ok){
-      $('res').classList.remove('hide');$('kpis').innerHTML='';$('checks').innerHTML='';
+      $('res').classList.remove('hide');$('kpis').innerHTML='';$('checks').innerHTML='';$('dl').disabled=true;
       msg('g-msg','m-bad','<b>build.py se ha parado.</b> Mira la salida completa abajo: '
         +esc((res.err||'').split('\n').filter(Boolean).pop()||'sin detalle'));
       return;
@@ -290,7 +293,7 @@ $('go').onclick=async()=>{
 /* ═══════════ 3 · resultado ═══════════ */
 function resultado(){
   const d=DATA,c=d.cuadre||{},t=d.totales||{};
-  $('res').classList.remove('hide');$('pub').classList.remove('hide');
+  $('res').classList.remove('hide');$('dl').disabled=false;
   $('kpis').innerHTML=[
     ['Periodo',(d.rango||['—','—']).join(' → ')],
     ['Entradas',nf(c.entradas)],
@@ -375,6 +378,38 @@ $('gh-clear').onclick=()=>{localStorage.removeItem('tz_gh_tok');$('gh-tok').valu
   $('push').disabled=true;msg('p-msg','m-w','Token borrado de este navegador.')};
 try{ghCarga()}catch(e){$('gh-est').textContent='Este navegador no deja guardar nada (¿modo incógnito?)'}
 
+/* Comprueba lo que se puede comprobar sin dejar rastro: que el repo, la rama y la
+   ruta existen y que el token los lee. La escritura no tiene modo de prueba en la
+   API de GitHub, así que eso lo dice el mensaje de error al publicar. */
+$('gh-test').onclick=async()=>{
+  const own=$('gh-own').value.trim(),rep_=$('gh-rep').value.trim(),
+        pth=$('gh-pth').value.trim().replace(/^\/+/,''),brc=$('gh-brc').value.trim(),tok=$('gh-tok').value.trim();
+  if(!tok){msg('p-msg','m-bad','Pega primero el token.');return}
+  msg('p-msg','m-w','<span class="spin"></span>Probando…');
+  const H={'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  try{
+    const r=await fetch(`https://api.github.com/repos/${own}/${rep_}/contents/${pth}?ref=${encodeURIComponent(brc)}`,{headers:H});
+    if(r.ok){
+      const j=await r.json();
+      msg('p-msg','m-ok','<b>Token correcto para leer.</b> Encuentra <code>'+esc(pth)+'</code> en la rama <code>'+esc(brc)+'</code>'
+        +' ('+nf(j.size/1024)+' KB).<br><span class="mini">La API de GitHub no deja probar la escritura sin escribir. '
+        +'Si al publicar sale un 403, es que <b>Contents</b> está en <i>Read-only</i> y hay que ponerlo en <b>Read and write</b>.</span>');
+    }else if(r.status===404){
+      const rr=await fetch(`https://api.github.com/repos/${own}/${rep_}`,{headers:H});
+      if(rr.ok)msg('p-msg','m-w','El repositorio y el token están bien, pero <b>no existe <code>'+esc(pth)+'</code> en la rama <code>'+esc(brc)+'</code></b>. '
+        +'Si la ruta es la que quieres, se creará sola al publicar. Si no, corrígela arriba.');
+      else msg('p-msg','m-bad','<b>No se encuentra el repositorio <code>'+esc(own+'/'+rep_)+'</code></b>, o el token no tiene acceso a él. '
+        +'Revisa el usuario y el repositorio, y que al crear el token marcaras ese repo en <i>Only select repositories</i>.');
+    }else if(r.status===401){
+      msg('p-msg','m-bad','<b>El token no es válido</b> (401). Puede estar caducado, mal pegado o revocado. Crea uno nuevo.');
+    }else if(r.status===403){
+      msg('p-msg','m-bad','<b>El token no puede leer este repositorio</b> (403). En sus permisos, <b>Contents</b> tiene que estar al menos en <i>Read</i>. '
+        +'Si el repositorio es de una organización, además hay que permitir los tokens fine-grained en los ajustes de la organización.');
+    }else msg('p-msg','m-bad','GitHub ha respondido '+r.status+'.');
+  }catch(e){
+    msg('p-msg','m-bad','No se ha podido contactar con GitHub. Comprueba la conexión y que nada bloquee <code>api.github.com</code>.');
+  }
+};
 $('dl').onclick=()=>{
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([TXT],{type:'application/json'}));
@@ -411,6 +446,12 @@ $('push').onclick=async()=>{
       const j=await p.json().catch(()=>({}));
       if(p.status===409)throw new Error('Alguien ha subido otro <code>data.json</code> mientras generabas este. '
         +'Vuelve a pulsar Publicar para reintentar sobre la versión nueva.');
+      /* Leer un archivo solo pide Contents:Read; escribirlo pide Read and write.
+         Un 403 aquí, habiendo leído bien antes, es siempre ese permiso. */
+      if(p.status===403)throw new Error('El token <b>puede leer</b> el repositorio pero <b>no escribir</b> en él. '
+        +'En los permisos del token, <b>Contents</b> está en <i>Read-only</i>: cámbialo a <b>Read and write</b> '
+        +'(Settings → Developer settings → Personal access tokens → Fine-grained → tu token → Permissions) '
+        +'y vuelve a pulsar Publicar. No hace falta crear otro token ni volver a pegarlo.');
       throw new Error('GitHub ha respondido '+p.status+': '+esc(j.message||'sin detalle'));
     }
     const j=await p.json();

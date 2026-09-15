@@ -50,6 +50,15 @@ TIPSTER_ALIAS = {
 # fuentes convive en la carpeta ./entrada, asi que hay que quedarse con UNA por
 # cada tramo de fechas o las entradas se cuentan dos veces.
 #   antes de la fecha -> manda PremiumPay   |   desde la fecha -> manda Quanty
+# ---------- canales que no son de este panel ----------
+# PremiumPay y Quanty exportan canales que nosotros no anunciamos: pruebas,
+# canales de terceros, altas sueltas. Sin esto aparecen como un tipster mas en
+# Presupuesto y en la liga, con 0 EUR de inversion y dos entradas sueltas.
+# Se compara con el nombre del canal tal cual viene en el fichero (sin mayusculas).
+IGNORAR_CANAL = {
+    'patotipster',
+}
+
 # ---------- prefijo forzado por canal ----------
 # Cuando los enlaces de un canal NO llevan el nombre del conjunto de Meta, no se
 # puede deducir el prefijo del tipster: el canal "Surebet" de Quanty, por
@@ -105,6 +114,13 @@ PREF_ALIAS = {
     'GREEN':       'T.GREEN',
     'SBFREE':      'SB',
     'SUREBET':     'SB',
+    # --- conjuntos de Meta sin convencion de nombre -----------------------
+    # Un conjunto sin "_" no tiene prefijo que extraer, asi que su nombre entero
+    # acaba pareciendo un tipster nuevo y sale como fila propia en Presupuesto.
+    # Se mapean aqui, tal cual estan escritos en Meta y EN MAYUSCULAS.
+    # Si ves un "tipster" con espacios en la salida, su sitio es esta lista.
+    'TIPSTER VERDE APU Y COR AGOSTO 2026': 'T.VERDE',
+    'TIPSTER VERDE BBDD TODOS NUEVA':      'T.VERDE',
 }
 def norm_pref(p):
     p = str(p or '').strip().upper()
@@ -186,6 +202,13 @@ for f in js:
           + (' (ignoro su daily/avisos/totales)' if es_q else ''))
 s = pd.DataFrame(subs)
 if 'fuente' not in s.columns: s['fuente'] = 'premiumpay'
+if IGNORAR_CANAL and len(s):
+    _fu = s.tipster.astype(str).str.strip().str.lower().isin(IGNORAR_CANAL)
+    if _fu.any():
+        print(f'canales ignorados ({", ".join(sorted(set(s.loc[_fu].tipster)))}): '
+              f'{int(_fu.sum())} entradas fuera. Quita el canal de IGNORAR_CANAL si lo quieres medir.')
+        s = s[~_fu].reset_index(drop=True)
+    canales = [c for c in canales if str(c.get('tipster','')).strip().lower() not in IGNORAR_CANAL]
 
 # ---------- clave canonica ----------
 RUIDO = {'PRO', 'INTERESES', 'PROINTERESES'}
@@ -348,7 +371,10 @@ for canal, sub in s.groupby('tipster'):
     _dueno[p] = canal
     limpio = str(canal).replace('Publicidad Tipszum - ', '').replace('Publicidad Tipzum - ', '') \
                        .replace('-tipszum', '').replace(' - Tipszum', '').replace(' - TIPSZUM', '').strip()
-    NOMBRE[p] = TIPSTER_ALIAS.get(p, limpio)
+    # Un canal cuyo prefijo no se puede deducir no es un tipster: si se le pone el
+    # nombre del canal, aparece como uno mas en Presupuesto y en la liga. Se le deja
+    # una etiqueta que no engañe y el AVISO de arriba dice que lo añadas a CANAL_PREF.
+    NOMBRE[p] = 'Sin asignar' if p == '?' else TIPSTER_ALIAS.get(p, limpio)
 
 # --- desambiguar nombres visibles repetidos (case-insensitive) ---
 vistos = {}
@@ -603,6 +629,14 @@ otros = []
 for p, gg in df[~df.pref.isin(PREFS)].groupby('pref'):
     otros.append(dict(tipster=p, gasto_eur=round(eur(gg), 2),
                       adsets=int(gg['Ad set name'].nunique()), leads=int(gg['Results'].sum())))
+# Un prefijo con espacios es siempre el nombre entero de un conjunto mal nombrado,
+# no un tipster. Sale como fila en Presupuesto hasta que se mapea en PREF_ALIAS.
+_raros = [o for o in otros if ' ' in str(o['tipster'])]
+if _raros:
+    print('Conjuntos de Meta sin convencion de nombre (salen como tipsters falsos):')
+    for o in _raros:
+        print(f"    '{o['tipster']}': 'PREFIJO_REAL',   # {o['gasto_eur']} EUR, {o['adsets']} conjunto(s)")
+    print('    -> copia esas lineas dentro de PREF_ALIAS, arriba del todo, con el prefijo que toque.')
 
 # serie diaria de esos tipsters: no se les puede medir el CPL, pero si controlar el presupuesto
 otros_daily = []
@@ -707,3 +741,9 @@ else:
     print('estado: columna "Ad set delivery" ausente -> el dashboard usara la regla de inactividad')
 print('filas D:', len(D), '| placement:', len(PL))
 print('otros tipsters en export sin PP:', [o['tipster'] for o in otros])
+# Un tipster con entradas pero SIN un solo euro en Meta no es de este panel casi
+# nunca: suele ser un canal que la fuente exporta y que nosotros no anunciamos.
+_sin_gasto = [NOMBRE[p] for p in PREFS if not len(metaT[metaT.pref == p])]
+if _sin_gasto:
+    print('tipsters con entradas pero sin inversion en Meta:', _sin_gasto)
+    print('    -> si no son tuyos, añade el nombre de su canal a IGNORAR_CANAL, arriba del todo.')

@@ -82,7 +82,7 @@
     "T.GREEN||SLV": 1.2,
     "T.GREEN||USA": 1.8,
     "T.GREEN||*": 1.5,
-    "*||*": 1.3,
+    "*||*": 1.5,
     "COE||AUS": 1.5,
     "COE||CAN": 1.8,
     "COE||ESP": 1.5,
@@ -97,16 +97,33 @@
     "JAVIESPORTS||SLV": 1.2,
     "COE||USA": 1.8,
     "JAVIESPORTS||USA": 1.8,
-    "COE||*": 1
+    "COE||*": 1,
+    "AMANALISTA||ESP": 1.8,
+    "AMANALISTA||LATAM": 1,
+    "AMANALISTA||*": 1.5,
+    "DANIANALISTA||USA": 1.8,
+    "DANIANALISTA||*": 1.8,
+    "GONZALOAST||*": 1.5,
+    "MARCOP||*": 1.5,
+    "MARCOP||LATAM": 1,
+    "MARCOP||ESP": 1.5,
+    "JAVIESPORTS||*": 1.5
   },
   "presupuestos": {
     "A10-DEPORTES||2026-08": 3000,
-    "COE||2026-08": 1200,
+    "COE||2026-08": 0,
     "IDALLSPORTS||2026-08": 5000,
     "JAVIESPORTS||2026-08": 1500,
     "POWER||2026-08": 1500,
     "RGANALISTA||2026-08": 1000,
-    "[ES] AUD AGO 26 01||2026-08": 1200
+    "[ES] AUD AGO 26 01||2026-08": 1200,
+    "AMANALISTA||2026-09": 1000,
+    "DANIANALISTA||2026-09": 5000,
+    "MARCOP||2026-09": 2000,
+    "RGANALISTA||2026-09": 1000,
+    "A10-DEPORTES||2026-09": 3000,
+    "SB.EN||2026-09": 1000,
+    "SB.ES||2026-09": 500
   },
   "umbral": {
     "gasto_min_eur": 30,
@@ -118,7 +135,14 @@
     "pausar_pct": 200,
     "pagadores_min": 10
   },
-  "estados": {},
+  "estados": {
+    "AMANALISTA_LAT_APU+US++COM-ONL_IG-FB_SF": {
+      "estado": "TESTING",
+      "hasta": "2026-09-11",
+      "owner": "Oscar",
+      "nota": "Terminacion de test de US open SF"
+    }
+  },
   "equipo": [
     "Ana",
     "Sofía",
@@ -126,6 +150,10 @@
     "Oscar",
     "Pablo"
   ],
+  "meta": {
+    "quien": "sin identificar",
+    "cuando": "2026-09-15 11:29"
+  },
   "sheet": {
     "url": "",
     "activo": false

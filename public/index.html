@@ -525,14 +525,57 @@ function bind(){
 /* ═══════════════════ ALMACENAMIENTO ═══════════════════ */
 /* Dos modos. Hoja de Google (equipo, compartido) o navegador (una persona).
    El repo aporta los valores por defecto; la hoja los sobrescribe. */
+/* ═══════════════ CONFIGURACIÓN COMPARTIDA VÍA GITHUB ═══════════════ */
+/* Reutiliza el token que cada persona ya pegó en cargar.html: mismo navegador y
+   mismo origen, así que no hay que pegarlo dos veces ni inventar otro ajuste.
+   La ruta se deduce de la del data.json, en la misma carpeta. */
+function ghCfg(){
+  const g=k=>(localStorage.getItem('tz_gh-'+k)||'').trim();
+  const own=g('own'),rep=g('rep'),brc=g('brc')||'main',tok=(localStorage.getItem('tz_gh_tok')||'').trim();
+  const pth=(g('pth')||'public/data.json').replace(/[^/]*$/,'config.json');
+  return (own&&rep&&tok)?{own,rep,brc,pth,tok}:null;
+}
+async function publicarCfg(){
+  const c=ghCfg();if(!c)return{ok:false,motivo:'sin-token'};
+  const H={'Authorization':'Bearer '+c.tok,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  const url=`https://api.github.com/repos/${c.own}/${c.rep}/contents/${c.pth}`;
+  try{
+    /* GitHub exige el sha de lo que reemplazas: si alguien publicó mientras
+       editabas, la escritura falla en vez de pisar su cambio en silencio. */
+    let sha=null;
+    const g=await fetch(`${url}?ref=${encodeURIComponent(c.brc)}`,{headers:H,cache:'no-store'});
+    if(g.ok)sha=(await g.json()).sha;
+    else if(g.status!==404)return{ok:false,motivo:g.status===403?'permiso':'lectura',cod:g.status};
+    const txt=JSON.stringify(CFG,null,2),by=new TextEncoder().encode(txt);
+    let bin='';const N=0x8000;
+    for(let i=0;i<by.length;i+=N)bin+=String.fromCharCode.apply(null,by.subarray(i,i+N));
+    const body={message:`config.json · ${CFG.meta.quien} · ${CFG.meta.cuando}`,content:btoa(bin),branch:c.brc};
+    if(sha)body.sha=sha;
+    const r=await fetch(url,{method:'PUT',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(r.ok)return{ok:true};
+    if(r.status===409)return{ok:false,motivo:'conflicto'};
+    if(r.status===403)return{ok:false,motivo:'permiso'};
+    const j=await r.json().catch(()=>({}));return{ok:false,motivo:'http',cod:r.status,msg:j.message};
+  }catch(e){return{ok:false,motivo:'red'}}
+}
 const STORE={
   mode:'local',
+  repoGana:false, localGana:false,
   async load(){
     let cfg=JSON.parse(JSON.stringify(CFG_DEF)),log=[];
     const rep=await loadJSON('config.json',{soft:true});
     if(rep)cfg=merge(cfg,normCfg(rep));
+    /* Antes localStorage se aplicaba SIEMPRE encima del config.json del repo, así
+       que una copia vieja en un navegador pisaba lo que otra persona acababa de
+       publicar, y solo esa persona veía valores fantasma. Ahora manda la copia
+       más reciente, comparando la marca de tiempo que deja guardarCfg(). */
     const loc=localStorage.getItem('tz_cfg');
-    if(loc){try{cfg=merge(cfg,JSON.parse(loc))}catch(e){}}
+    if(loc){try{
+      const L=JSON.parse(loc);
+      const tRep=(rep&&rep.meta&&rep.meta.cuando)||'', tLoc=(L.meta&&L.meta.cuando)||'';
+      if(!tRep||tLoc>=tRep){cfg=merge(cfg,L);STORE.localGana=!!(tRep&&tLoc>tRep)}
+      else{STORE.repoGana=true;localStorage.setItem('tz_cfg',JSON.stringify(cfg))}
+    }catch(e){}}
     const ll=localStorage.getItem('tz_log');
     if(ll){try{log=JSON.parse(ll)}catch(e){}}
     if(cfg.sheet&&cfg.sheet.activo&&cfg.sheet.url){
@@ -546,6 +589,17 @@ const STORE={
   },
   async save(){
     localStorage.setItem('tz_cfg',JSON.stringify(CFG));
+    STORE.localGana=false;STORE.repoGana=false;
+    if(!ghCfg()&&STORE.mode!=='sheet')
+      return 'Guardado sólo en este navegador · nadie más lo verá. Pega tu token en cargar.html y vuelve a guardar para compartirlo.';
+    if(STORE.mode!=='sheet'){
+      const r=await publicarCfg();
+      if(r.ok)return 'Guardado y publicado para todo el equipo · lo verán al recargar el panel';
+      if(r.motivo==='conflicto')return 'Otra persona publicó su configuración mientras editabas. Recarga el panel y vuelve a aplicar tu cambio, o pisarías el suyo.';
+      if(r.motivo==='permiso')return 'Guardado aquí, pero GitHub rechazó escribir: el token tiene Contents en Read-only.';
+      if(r.motivo==='red')return 'Guardado aquí · no se ha podido contactar con GitHub.';
+      return 'Guardado aquí · GitHub respondió '+(r.cod||'?')+(r.msg?' ('+r.msg+')':'');
+    }
     if(STORE.mode==='sheet'){
       try{await fetch(CFG.sheet.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({accion:'guardar_config',config:CFG})});return 'Guardado en la hoja'}
@@ -695,6 +749,19 @@ const TIER={AHORA:{n:0,t:'Hacer ahora',d:'Cuesta dinero cada hora que pasa'},
   OK:{n:3,t:'Sin acción',d:'Dentro de objetivo'},
   DATOS:{n:4,t:'Sin evidencia suficiente',d:'Todavía no se puede juzgar'}};
 
+/* Tipsters cuyas entradas NO se pueden atribuir a ningún conjunto: la fuente no
+   da el dato (enlaces con nombre libre y sin meta_adset_id). Sus conjuntos van a
+   salir siempre con 0 entradas, y decirle al equipo "revisa el enlace" en cada uno
+   es mandarlo a arreglar algo que no está en su mano. Se detecta solo. */
+let _SINATR=null;
+function sinAtribucion(){
+  if(_SINATR)return _SINATR;
+  const t={};
+  D.forEach(r=>{const k=r.tipster;if(!k)return;
+    t[k]=t[k]||{tot:0,gen:0};t[k].tot+=r.entradas;if(r.grupo===SIN)t[k].gen+=r.entradas});
+  _SINATR=new Set(Object.entries(t).filter(([k,v])=>v.tot>0&&v.gen===v.tot).map(([k])=>k));
+  return _SINATR;
+}
 function decide(c,ctx){
   const U=CFG.umbral,ob=c.objetivo,T=ob.v;
   const evidencia=c.gasto>=U.gasto_min_eur;
@@ -703,9 +770,16 @@ function decide(c,ctx){
   if(!evidencia) return R('DATOS','ESPERAR','b-dat','Todavía no ha gastado lo suficiente para juzgarlo',
     `${ef(c.gasto)} invertidos, el mínimo son ${ef(U.gasto_min_eur)}`,'baja','Captación');
 
-  if(c.leads>=5&&c.entradas===0) return R('AHORA','REVISAR ENLACE','b-pau',
-    'Genera leads pero ni una sola persona llega al canal',
-    `${nf(c.leads)} leads y 0 entradas — apunta a un enlace roto, mal nombrado o ausente en PremiumPay`,'alta','Conversión a canal');
+  if(c.leads>=5&&c.entradas===0){
+    /* Si NINGUNA entrada de este tipster tiene conjunto, el 0 no dice nada del
+       conjunto: dice que la fuente no sabe de qué conjunto vino cada entrada. */
+    if(sinAtribucion().has(c.tipster)) return R('DATOS','SIN ATRIBUIR','b-dat',
+      'Sus entradas existen, pero la fuente no dice de qué conjunto vienen',
+      `${nf(c.leads)} leads. Todas las entradas de ${esc(c.tipster)} caen en «${esc(SIN)}»: sus enlaces no llevan el nombre del conjunto ni identificador de anuncio. Mídelo por tipster y por país, no por conjunto.`,'baja','Conversión a canal');
+    return R('AHORA','REVISAR ENLACE','b-pau',
+      'Genera leads pero ni una sola persona llega al canal',
+      `${nf(c.leads)} leads y 0 entradas — apunta a un enlace roto, mal nombrado o ausente en PremiumPay`,'alta','Conversión a canal');
+  }
 
   if(c.leads===0&&c.impresiones>=1000) return R('AHORA','PAUSAR','b-pau',
     'Tiene entrega pero no genera ni un lead',`${nf(c.impresiones)} impresiones sin un solo lead`,'alta','Captación');
@@ -1761,9 +1835,11 @@ function ajustes(C){
     const g=i.dataset.est;CFG.estados[g]=CFG.estados[g]||{};CFG.estados[g][i.dataset.f]=i.value;
     if(!CFG.estados[g].estado)delete CFG.estados[g];DIRTY=true;render()});
 
-  document.getElementById('store-mode').textContent=STORE.mode==='sheet'
+  const _gh=ghCfg();
+  document.getElementById('store-mode').innerHTML=STORE.mode==='sheet'
     ?'Conectado a la hoja de Google · lo que guardes lo ve todo el equipo'
-    :'Guardando en este navegador · nadie más ve tus cambios hasta que conectes la hoja';
+    :(_gh?`Al guardar se publica en <code>${esc(_gh.own+'/'+_gh.rep)}</code> → <code>${esc(_gh.pth)}</code> y lo ve todo el equipo`
+         :'Guardando sólo en este navegador · pega tu token en <a href="cargar.html">cargar.html</a> para que lo que guardes lo vea el equipo');
   document.getElementById('t-sheet').querySelector('tbody').innerHTML=
     `<tr><td style="text-align:left">URL del servicio web de Apps Script</td>
       <td colspan="2"><input class="txt" id="sh-url" value="${esc(CFG.sheet.url||'')}" placeholder="https://script.google.com/macros/s/…/exec" style="min-width:340px"></td></tr>
@@ -1779,8 +1855,10 @@ function ajustes(C){
 function pintaDirty(){
   const el=document.getElementById('cfg-dirty');if(!el)return;
   el.innerHTML=DIRTY
-    ?`<div class="wm"><b>Hay cambios sin guardar.</b> Los objetivos, presupuestos, umbrales y estados que acabas de tocar ya afectan a lo que ves en pantalla, pero <b>no los verá nadie más</b> —ni sobrevivirán a un cambio de navegador— hasta que pulses <b>Guardar</b>. Si además quieres que los tenga el repositorio, descarga el <code>config.json</code> y súbelo.</div>`
-    :'';
+    ?`<div class="wm"><b>Hay cambios sin guardar.</b> Los objetivos, presupuestos, umbrales y estados que acabas de tocar ya afectan a lo que ves en pantalla, pero <b>no los verá nadie más</b> —ni sobrevivirán a un cambio de navegador— hasta que pulses <b>Guardar</b>.${ghCfg()?'':' Y para que los vea el equipo, pega antes tu token en <a href="cargar.html">cargar.html</a>.'}</div>`
+    :(STORE.localGana
+      ?`<div class="wm"><b>Tienes configuración guardada aquí más reciente que la del repositorio.</b> Es la que estás viendo, pero el resto del equipo sigue con la suya. Pulsa <b>Guardar</b> para publicarla.</div>`
+      :'');
 }
 /* guardar centralizado: sella quién y cuándo, y apaga el aviso */
 async function guardarCfg(){
@@ -2002,7 +2080,7 @@ function avisoPacing(){
 
 /* ═══════════════════ RENDER ═══════════════════ */
 function render(){
-  _epc.clear();   /* el estado depende de CFG.estados y de ST.to: se recalcula cada render */
+  _epc.clear();_SINATR=null;   /* el estado depende de CFG.estados y de ST.to: se recalcula cada render */
   const base=rowsBase(),rows=F(),prev=rowsPrev();
   const C=tarjetas(base);
   const m=met(sum(rows));

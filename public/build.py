@@ -126,6 +126,52 @@ def norm_pref(p):
     p = str(p or '').strip().upper()
     return PREF_ALIAS.get(p, p)
 
+# ---------- filtro de nomenclatura de enlaces ----------
+# Regla de negocio (16/09/2026, Oscar): el panel solo mide trafico que viene de
+# Meta. Un enlace de Telegram entra en el dashboard si, y solo si, su nombre:
+#   a) sigue la convencion de Meta -> PREFIJO_PAIS_...
+#        "GONZALOAST_ESP_APU_IG-FB", "T.GREEN_USA_RADS_P"
+#   b) es un generico de mes -> contiene "generico"/"generica" Y un mes
+#        "Genérico Septiembre 26", "Audiencia Genérica Agosto 26", "generico meta agosto"
+# Todo lo demas queda FUERA del panel: no suma entradas, ni pagos, ni ingresos,
+# ni bajas en ningun total. Son enlaces de personas ("Iker Power", "Brais"),
+# de TikTok ("Enlace tktk"), pruebas ("2KR", "Prueba") y nombres libres
+# ("México Diciembre 1", "FB Septiembre 2026"): tráfico que no paga Meta y que
+# ensuciaba el CPL y el ROAS del panel.
+# Ponlo en False para volver al comportamiento anterior sin tocar nada mas.
+FILTRO_ENLACES = True
+
+_MESES = ('ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|'
+          'NOVIEMBRE|DICIEMBRE|ENE|FEB|MAR|ABR|MAY|JUN|JUL|SEPT|SEP|AGO|OCT|NOV|DIC')
+RE_MES_LIBRE = re.compile(r'\b(' + _MESES + r')\b')
+# Campos que la convencion permite y el panel ignora: el mes (SEP2026) y el
+# relleno PRO/INTERESES. Son los mismos que descarta toks(), mas abajo.
+RE_MES_CAMPO = re.compile(r'^(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\d{2,4}$')
+RUIDO_CONV = {'PRO', 'INTERESES', 'PROINTERESES'}
+RE_PREFIJO = re.compile(r'^[A-Z0-9][A-Z0-9.\-]*$')   # T.VERDE, A10-DEPORTES, POWER
+RE_PAIS = re.compile(r'^[A-Z]{2,7}$')                # ESP, USA, LAT, LATAM, GRB
+
+def _campos_conv(t):
+    c = [x.strip() for x in t.split('_') if x.strip()]
+    return [x for x in c if x not in RUIDO_CONV and not RE_MES_CAMPO.match(x)]
+
+def _sin_tildes(t):
+    t = str(t).upper()
+    for a, b in (('Á','A'), ('É','E'), ('Í','I'), ('Ó','O'), ('Ú','U'),
+                 ('Ü','U'), ('Ñ','N'), ('À','A'), ('È','E'), ('Ì','I'),
+                 ('Ò','O'), ('Ù','U')):
+        t = t.replace(a, b)
+    return t
+
+def clasifica_enlace(nombre):
+    """'meta' | 'generico' | 'fuera'. Ver FILTRO_ENLACES."""
+    t = _sin_tildes(nombre).strip()
+    if not t or t in ('NAN', 'NONE'): return 'fuera'
+    c = _campos_conv(t)
+    if len(c) >= 2 and RE_PREFIJO.match(c[0]) and RE_PAIS.match(c[1]): return 'meta'
+    if 'GENERIC' in t and RE_MES_LIBRE.search(t): return 'generico'
+    return 'fuera'
+
 def _sid_norm(v):
     """ID de Meta como texto limpio. Nunca via float: 18 digitos no caben exactos."""
     t = str(v).strip()
@@ -209,6 +255,51 @@ if IGNORAR_CANAL and len(s):
               f'{int(_fu.sum())} entradas fuera. Quita el canal de IGNORAR_CANAL si lo quieres medir.')
         s = s[~_fu].reset_index(drop=True)
     canales = [c for c in canales if str(c.get('tipster','')).strip().lower() not in IGNORAR_CANAL]
+
+# ---------- aplicar el filtro de nomenclatura ----------
+# Va aqui a proposito: antes de deducir prefijos y de calcular claves, para que
+# un enlace excluido no influya ni en el prefijo del tipster ni en los avisos.
+EXCLUIDOS = []
+if FILTRO_ENLACES and len(s) and 'nombre_enlace' in s.columns:
+    _cls = s.nombre_enlace.apply(clasifica_enlace)
+
+    # enlaces que dicen "generico" pero no llevan mes: casi siempre hay que
+    # renombrarlos, no excluirlos. Se avisa antes de tirarlos.
+    _casi = s.loc[(_cls == 'fuera') & s.nombre_enlace.apply(
+        lambda n: 'GENERIC' in _sin_tildes(n))].nombre_enlace.unique()
+    if len(_casi):
+        print('AVISO: enlaces con "generico" pero SIN mes en el nombre - se excluyen igual. '
+              'Renombralos con el mes y vuelven a contar:')
+        for _n in sorted(_casi): print(f'    - "{_n}"')
+
+    _fuera = _cls == 'fuera'
+    if _fuera.any():
+        _x = s.loc[_fuera, ['tipster', 'nombre_enlace']].copy()
+        _x['entradas'] = 1
+        _x['pagos'] = pd.to_numeric(s.loc[_fuera].get('pagos_num'), errors='coerce').fillna(0).astype(int) \
+            if 'pagos_num' in s.columns else 0
+        _det = (_x.groupby(['tipster', 'nombre_enlace'], as_index=False)
+                  .agg(entradas=('entradas', 'sum'), pagos=('pagos', 'sum'))
+                  .sort_values('entradas', ascending=False))
+        EXCLUIDOS = [dict(tipster=r.tipster, enlace=r.nombre_enlace,
+                          entradas=int(r.entradas), pagos=int(r.pagos))
+                     for r in _det.itertuples()]
+        print(f'filtro de nomenclatura: {int(_fuera.sum())} entradas FUERA del panel '
+              f'({len(_det)} enlaces que no son de Meta ni genericos de mes)')
+        for r in _det.head(15).itertuples():
+            print(f'    - {int(r.entradas):5d} entradas, {int(r.pagos):3d} pagos | '
+                  f'{r.tipster} | "{r.nombre_enlace}"')
+        if len(_det) > 15: print(f'    ... y {len(_det) - 15} enlaces mas')
+        s = s[~_fuera].reset_index(drop=True)
+    else:
+        print('filtro de nomenclatura: ningun enlace fuera de convencion')
+
+    # la cola de aprobacion se filtra con la misma regla
+    if pend:
+        _n0 = len(pend)
+        pend = [p for p in pend if clasifica_enlace(p.get('nombre', '')) != 'fuera']
+        if len(pend) < _n0:
+            print(f'    cola de aprobacion: {_n0 - len(pend)} enlaces excluidos por el mismo filtro')
 
 # ---------- clave canonica ----------
 RUIDO = {'PRO', 'INTERESES', 'PROINTERESES'}
@@ -708,6 +799,15 @@ for _p, (_fec, _nueva) in CORTE.items():
                   f'PremiumPay desde el {_fec} y la extraccion de {_nueva} empieza el {_ini}. '
                   f'Pide a {_nueva} una extraccion que arranque el {_fec} o antes.')
 
+# ── Enlaces excluidos por nomenclatura ────────────────────────────────────
+# Viajan al panel como aviso para que se vean sin abrir la consola. No estan en
+# ningun total: son entradas que el panel ya no mide.
+for _e in EXCLUIDOS:
+    avisos.append(dict(tipo='Enlace excluido por nomenclatura', tipster=_e['tipster'],
+                       valor=_e['enlace'],
+                       detalle=f"{_e['entradas']} entradas, {_e['pagos']} pagos - fuera del panel "
+                               f"(no sigue la convencion de Meta ni es un generico de mes)"))
+
 out = dict(version=2, fx=FX, fx_fecha=FX_FECHA, fx_fuente='Wise (mid-market)',
            generado=datetime.now().strftime('%Y-%m-%d %H:%M'),
            daily=D.to_dict('records'), placement=PL.to_dict('records'), retencion=ret,
@@ -720,6 +820,7 @@ out = dict(version=2, fx=FX, fx_fecha=FX_FECHA, fx_fuente='Wise (mid-market)',
            cruce_por_id=int(N_ID), tiene_adset_id=bool(COL_ASID),
            creativos=CRE, tiene_plantilla=bool(TIENE_PLANT), tiene_gasto_creativo=bool(CRE_GASTO),
            corte={k: list(v) for k, v in CORTE.items()},
+           excluidos=EXCLUIDOS, filtro_enlaces=bool(FILTRO_ENLACES),
            cuadre=dict(entradas=int(len(s)), pagos=int(s.pag.sum()), ingresos=float(s.imp.sum()),
                        gasto_usd=float(metaT.loc[metaT.moneda != 'EUR', 'gasto'].sum()),
                        gasto_eur_nativo=float(metaT.loc[metaT.moneda == 'EUR', 'gasto'].sum()),

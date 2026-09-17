@@ -190,6 +190,42 @@ print(f'Meta: {len(xl)} archivo(s) | PremiumPay: {len(js)} archivo(s) | FX {FX}'
 # La columna viene como "Amount spent (USD)" o "Amount spent (EUR)". Se
 # normaliza a `gasto` + `moneda` y la conversion se hace al final, fila a fila:
 # asi conviven una cuenta en dolares y otra en euros sin inventar un FX medio.
+# ---------- alias de columnas de Meta ----------
+# Ads Reporting no siempre deja exportar "Results"/"Result type" (segun el informe
+# guardado y la cuenta). Con el objetivo de leads, la columna equivalente es
+# "Leads": verificado el 17/09/2026 contra 1.406 claves (conjunto x dia) de dos
+# exports del mismo periodo -> identicas en 1.402; las 4 restantes eran del dia en
+# curso, exportado con minutos de diferencia (el gasto tambien bailaba).
+# Ademas, en esta cuenta 'Result type' es 'Website leads' en el 100% de las filas
+# con resultado, asi que 'Leads' es equivalente y mas limpio.
+# Si manana aparece otro nombre, anadelo a la lista y no toques nada mas.
+ALIAS_META = {
+    'Results':         ['Results', 'Leads', 'Website leads', 'Resultados',
+                        'Clientes potenciales', 'Clientes potenciales del sitio web'],
+    'Cost per result': ['Cost per result', 'Cost per lead', 'Coste por resultado',
+                        'Coste por cliente potencial'],
+}
+
+def normaliza_meta(_d, _nombre):
+    """Renombra alias al nombre canonico y deriva 'Result type' si no viene."""
+    _cols = {str(c).strip(): c for c in _d.columns}
+    for _canon, _alias in ALIAS_META.items():
+        if _canon in _cols: continue
+        for _a in _alias:
+            if _a in _cols:
+                _d = _d.rename(columns={_cols[_a]: _canon})
+                print(f'  {_nombre}: columna "{_a}" -> "{_canon}"')
+                break
+    # 'Result type' no existe en los exports basados en Leads. El panel no lo usa
+    # hoy, pero se deriva para no romper nada que lo mire manana.
+    if 'Result type' not in _d.columns:
+        if 'Results' in _d.columns:
+            _v = pd.to_numeric(_d['Results'], errors='coerce').fillna(0)
+            _d['Result type'] = np.where(_v > 0, 'Website leads', '')
+        else:
+            _d['Result type'] = ''
+    return _d
+
 SPEND = re.compile(r'^Amount spent \(([A-Za-z]{3})\)$')
 _partes = []
 for f in xl:
@@ -201,6 +237,8 @@ for f in xl:
             ('ad set id', 'adset id', 'ad id', 'campaign id',
              'id del conjunto de anuncios', 'id de la campaña', 'id del anuncio')]
     _d = pd.read_excel(f, dtype={c: str for c in _idc})
+    _d = normaliza_meta(_d, os.path.basename(f))
+    _d['_origen'] = os.path.basename(f)
     _col = next((c for c in _d.columns if SPEND.match(str(c).strip())), None)
     if not _col:
         sys.exit(f'{os.path.basename(f)}: no encuentro la columna de gasto '
@@ -211,6 +249,27 @@ for f in xl:
     _partes.append(_d)
 df = pd.concat(_partes, ignore_index=True)
 print('monedas en el export:', sorted(df.moneda.unique()), '- el FX solo se aplica a USD')
+
+# ── Solapamiento entre varios Excel de Meta ───────────────────────────────
+# Dos exports que cubren el mismo conjunto y el mismo dia DUPLICAN el gasto: es
+# exactamente lo que paso el 17/09/2026 al subir el export global y el de la
+# cuenta nueva juntos (DANIANALISTA_USA_COR_IG-FB salio a 1.389 EUR en vez de
+# 695 EUR). Un solo Excel por rango de fechas; si hay dos cuentas, exportalas en
+# un unico informe o con rangos de fecha que no se pisen.
+if len(_partes) > 1 and {'Ad set name', 'Day'} <= set(df.columns):
+    _k = df['Ad set name'].astype(str) + '|' + df['Day'].astype(str)
+    _ov = df.assign(_k=_k).groupby('_k')['_origen'].nunique()
+    _rep = set(_ov[_ov > 1].index)
+    if _rep:
+        _gdup = float(pd.to_numeric(df.loc[_k.isin(_rep), 'gasto'],
+                                    errors='coerce').fillna(0).sum())
+        sys.exit(
+            f'STOP: {len(_rep)} claves (conjunto x dia) aparecen en mas de un Excel de Meta '
+            f'-> el gasto se contaria dos veces (~{_gdup:,.2f} en divisa de origen).\n'
+            f'       Ficheros: {sorted(df._origen.unique())}\n'
+            f'       Deja UN solo export por rango de fechas en ./{ENT}/ (o rangos que no se pisen).')
+    print(f'solapamiento entre exports: ninguno ({len(_partes)} ficheros, claves disjuntas)')
+df = df.drop(columns=['_origen'])
 
 def eur(sub):
     """Suma en EUR de filas de Meta, respetando la moneda de cada cuenta."""

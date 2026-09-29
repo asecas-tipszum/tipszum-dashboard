@@ -43,6 +43,14 @@ TIPSTER_ALIAS = {
     'T.VERDE':  'Tipster Verde (ES)',
     'T.GREEN':  'Tipster Verde (EN)',
     'SB':       'Surebet',
+    'JAVIESPORTS': 'JAVIESPORTS',      # antes "NUEVA ERA ESPORTS" (nombre del canal)
+    'ALON':        'ALONBETSA',        # antes "El Crack de las Apuestas Free"
+}
+# Mismo cambio, pero por nombre de canal: los enlaces excluidos por nomenclatura
+# se listan antes de conocer el prefijo y saldrian con el nombre antiguo.
+CANAL_RENOMBRE = {
+    'NUEVA ERA ESPORTS':             'JAVIESPORTS',
+    'EL CRACK DE LAS APUESTAS FREE': 'ALONBETSA',
 }
 
 # ---------- corte de fuente por tipster ----------
@@ -340,7 +348,7 @@ if FILTRO_ENLACES and len(s) and 'nombre_enlace' in s.columns:
         _det = (_x.groupby(['tipster', 'nombre_enlace'], as_index=False)
                   .agg(entradas=('entradas', 'sum'), pagos=('pagos', 'sum'))
                   .sort_values('entradas', ascending=False))
-        EXCLUIDOS = [dict(tipster=r.tipster, enlace=r.nombre_enlace,
+        EXCLUIDOS = [dict(tipster=CANAL_RENOMBRE.get(str(r.tipster).strip().upper(), r.tipster), enlace=r.nombre_enlace,
                           entradas=int(r.entradas), pagos=int(r.pagos))
                      for r in _det.itertuples()]
         print(f'filtro de nomenclatura: {int(_fuera.sum())} entradas FUERA del panel '

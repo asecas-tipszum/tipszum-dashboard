@@ -214,9 +214,12 @@ $('drop').addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
 /* build.py NO vive dentro de este archivo: se carga de al lado. Así hay una sola
    versión del pipeline, la misma que corres en local, y se toca sin abrir el HTML. */
 let PY=null,DATA=null,TXT='';
-const WHEEL_OPENPYXL='';   // vacío = se baja de PyPI
+/* openpyxl y su dependencia se sirven desde este mismo panel: así no depende de
+   que la red deje llegar a pypi.org (hay redes, VPN y bloqueadores que lo cortan). */
+const WHEELS=['et_xmlfile-2.0.0-py3-none-any.whl','openpyxl-3.1.5-py2.py3-none-any.whl'];
 const RUNNER=`
 import os, sys, io, json, traceback, shutil
+os.makedirs('/work', exist_ok=True)
 os.chdir('/work')
 if os.path.isdir('/work/entrada'): shutil.rmtree('/work/entrada')
 os.makedirs('/work/entrada', exist_ok=True)
@@ -245,18 +248,20 @@ json.dumps({'ok': _ok, 'err': _err, 'log': _out, 'data': _dat})
 async function arranca(){
   if(PY)return PY;
   msg('g-msg','m-w','<span class="spin"></span>Descargando Python y las librerías… (solo la primera vez)');
-  PY=await loadPyodide();
-  await PY.loadPackage(['pandas','numpy','micropip']);
-  /* openpyxl NO viene en Pyodide y pandas lo necesita para abrir un .xlsx.
-     Es un paquete Python puro, así que micropip lo baja de PyPI y funciona igual. */
+  /* PY solo se asigna al final: si algo falla a medias, el siguiente clic
+     vuelve a preparar todo en vez de reutilizar un Python sin /work. */
+  const py=await loadPyodide();
+  await py.loadPackage(['pandas','numpy','micropip']);
   try{
-    const mp=PY.pyimport('micropip');
-    await mp.install(WHEEL_OPENPYXL||'openpyxl');
+    const mp=py.pyimport('micropip');
+    const base=new URL('.',location.href).href;
+    await mp.install.callKwargs(py.toPy(WHEELS.map(w=>base+w)),{deps:false});
   }catch(e){
     throw new Error('No se ha podido instalar openpyxl, que es lo que abre los Excel. '
-      +'Suele ser que la red bloquee pypi.org o files.pythonhosted.org. Detalle: '+e.message);
+      +'Comprueba que los .whl están en la misma carpeta que esta página. Detalle: '+e.message);
   }
-  PY.FS.mkdirTree('/work');
+  py.FS.mkdirTree('/work');
+  PY=py;
   return PY;
 }
 async function fuente(){

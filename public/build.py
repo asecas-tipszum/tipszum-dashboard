@@ -44,13 +44,13 @@ TIPSTER_ALIAS = {
     'T.GREEN':  'Tipster Verde (EN)',
     'SB':       'Surebet',
     'JAVIESPORTS': 'JAVIESPORTS',      # antes "NUEVA ERA ESPORTS" (nombre del canal)
-    'ALON':        'ALONBETSA',        # antes "El Crack de las Apuestas Free"
+    'ALON':        'ALONBETS',        # antes "El Crack de las Apuestas Free"
 }
 # Mismo cambio, pero por nombre de canal: los enlaces excluidos por nomenclatura
 # se listan antes de conocer el prefijo y saldrian con el nombre antiguo.
 CANAL_RENOMBRE = {
     'NUEVA ERA ESPORTS':             'JAVIESPORTS',
-    'EL CRACK DE LAS APUESTAS FREE': 'ALONBETSA',
+    'EL CRACK DE LAS APUESTAS FREE': 'ALONBETS',
 }
 
 # ---------- corte de fuente por tipster ----------

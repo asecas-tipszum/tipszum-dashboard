@@ -18,13 +18,66 @@ from datetime import datetime
 #   6. nombres reales de conjunto y campana por grupo (opcional)
 #   7. totales: gasto atribuible vs gasto total real (incl. tipsters sin PP)
 #   8. ultimo dia con gasto por grupo -> deteccion de conjuntos dormidos
+#
+#  CAMBIOS v3 (oct 2026):
+#   9. FX POR MES: los meses cerrados usan un tipo fijo (FX_CERRADO); solo el mes
+#      en curso usa el tipo de hoy (--fx). El CPL historico ya no se mueve.
+#  10. Export de Meta en ESPAÑOL o en INGLES: las columnas se normalizan a un
+#      nombre canonico (COLS_META), sin importar tildes ni mayusculas.
+#  11. Se descarta la fila de TOTALES del "Raw Data Report" (nombre y dia vacios):
+#      antes entraba como un tipster "NAN" y duplicaba la inversion total.
+#  12. Ubicaciones en español mapeadas a las mismas etiquetas que en ingles.
+#  13. Controles nuevos: divisa de la fila vs cabecera, ventana de atribucion
+#      mezclada, y rango de Meta vs rango de entradas.
 # ============================================================
 import sys, glob, os
 from datetime import date
 
-FX = 0.8673                    # USD -> EUR (Wise). Editable tambien en el dashboard.
-FX_FECHA = date.today().strftime('%d/%m/%Y')
-if '--fx' in sys.argv: FX = float(sys.argv[sys.argv.index('--fx') + 1])
+# ---------- tipo de cambio USD -> EUR, POR MES ----------
+# Regla (Oscar, 02/10/2026): un mes se cierra con el tipo de cambio del DIA 1 DEL
+# MES SIGUIENTE (Wise, mid-market) y ya no se toca. Septiembre se convierte con el
+# tipo del 1 de octubre, para siempre.
+# El mes en curso no esta cerrado: usa el tipo de hoy, que se pasa con --fx (o en
+# el campo de cargar.html) y va cambiando cada dia hasta que el mes se cierra.
+#
+# EL DIA 1 DE CADA MES: añade aqui el mes que acaba de cerrar con el tipo de ese dia.
+# Si se te olvida, el script lo convierte con el tipo de hoy, lo marca como
+# "provisional" y te imprime la linea exacta que tienes que pegar.
+FX_CERRADO = {
+    '2026-08': 0.8673,   # Wise 02/09/2026 (el que se uso en el cierre de agosto)
+    '2026-09': 0.8848,   # Wise 02/10/2026 -> sustituir por el del 01/10 si difiere
+}
+FX_FUENTE = 'Wise (mid-market)'
+HOY = date.today()
+MES_HOY = HOY.strftime('%Y-%m')
+FX_FECHA = HOY.strftime('%d/%m/%Y')
+if '--fx' in sys.argv:
+    FX = float(sys.argv[sys.argv.index('--fx') + 1])      # tipo de HOY -> mes en curso
+    FX_ORIGEN = 'manual'
+else:
+    _ult = max(FX_CERRADO) if FX_CERRADO else None
+    FX = FX_CERRADO[_ult] if _ult else 0.8673
+    FX_ORIGEN = f'sin --fx: copia del cierre de {_ult}'
+    print(f'AVISO: no se ha pasado el tipo de hoy (--fx). El mes en curso usa {FX} '
+          f'({FX_ORIGEN}). Pasa el de Wise de hoy: python build.py --fx 0.XXXX')
+if not 0.5 < FX < 1.5:
+    sys.exit(f'STOP: tipo de cambio {FX} fuera de rango. Es USD->EUR (≈0.85-0.95), no EUR->USD.')
+for _m, _v in FX_CERRADO.items():
+    if not 0.5 < _v < 1.5:
+        sys.exit(f'STOP: FX_CERRADO["{_m}"] = {_v} fuera de rango (¿lo has puesto EUR->USD?).')
+
+FX_MES = {}          # mes -> tipo aplicado (se rellena al leer Meta)
+FX_ESTADO = {}       # mes -> 'cerrado' | 'abierto' | 'provisional'
+def fx_de_mes(m):
+    if m in FX_MES: return FX_MES[m]
+    if m in FX_CERRADO:
+        v, e = FX_CERRADO[m], 'cerrado'
+    elif m >= MES_HOY:
+        v, e = FX, 'abierto'
+    else:
+        v, e = FX, 'provisional'
+    FX_MES[m] = v; FX_ESTADO[m] = e
+    return v
 
 # ---------- normalizacion de paises ----------
 # Anade aqui cualquier variante nueva que aparezca. La clave es en MAYUSCULAS.
@@ -192,7 +245,7 @@ xl = sorted(glob.glob(os.path.join(ENT, '*.xlsx'))) + sorted(glob.glob(os.path.j
 js = sorted(glob.glob(os.path.join(ENT, '*.json')))
 if not xl or not js:
     sys.exit(f'Faltan archivos en ./{ENT}/  (encontrados: {len(xl)} Excel, {len(js)} JSON)')
-print(f'Meta: {len(xl)} archivo(s) | PremiumPay: {len(js)} archivo(s) | FX {FX}')
+print(f'Meta: {len(xl)} archivo(s) | PremiumPay: {len(js)} archivo(s) | FX mes en curso {FX}')
 
 # ── Excel de Meta: cada cuenta factura en su divisa ───────────────────────
 # La columna viene como "Amount spent (USD)" o "Amount spent (EUR)". Se
@@ -207,23 +260,71 @@ print(f'Meta: {len(xl)} archivo(s) | PremiumPay: {len(js)} archivo(s) | FX {FX}'
 # Ademas, en esta cuenta 'Result type' es 'Website leads' en el 100% de las filas
 # con resultado, asi que 'Leads' es equivalente y mas limpio.
 # Si manana aparece otro nombre, anadelo a la lista y no toques nada mas.
-ALIAS_META = {
-    'Results':         ['Results', 'Leads', 'Website leads', 'Resultados',
-                        'Clientes potenciales', 'Clientes potenciales del sitio web'],
-    'Cost per result': ['Cost per result', 'Cost per lead', 'Coste por resultado',
-                        'Coste por cliente potencial'],
+#
+# COLS_META: nombre canonico (el que usa el resto del script) -> como puede venir
+# escrito, en ingles o en español (Meta en español: "Nombre del conjunto de
+# anuncios", "Día", "Importe gastado (USD)"...). La comparacion ignora tildes,
+# mayusculas y espacios dobles. Orden = prioridad si vienen dos a la vez.
+# Si mañana Meta cambia una traduccion, añadela a su lista y no toques nada mas.
+COLS_META = {
+    'Ad set name':        ['Ad set name', 'Nombre del conjunto de anuncios'],
+    'Day':                ['Day', 'Día', 'Fecha'],
+    'Placement':          ['Placement', 'Ubicación'],
+    'Platform':           ['Platform', 'Publisher platform', 'Plataforma'],
+    'Reach':              ['Reach', 'Alcance'],
+    'Impressions':        ['Impressions', 'Impresiones'],
+    'Link clicks':        ['Link clicks', 'Clics en el enlace'],
+    'Clicks (all)':       ['Clicks (all)', 'Clics (todos)'],
+    'Landing page views': ['Landing page views', 'Website landing page views',
+                           'Visitas a la página de destino',
+                           'Visitas a la página de destino del sitio web'],
+    'Results':            ['Results', 'Leads', 'Website leads', 'Resultados',
+                           'Clientes potenciales', 'Clientes potenciales del sitio web'],
+    'Cost per result':    ['Cost per result', 'Cost per lead', 'Coste por resultado',
+                           'Coste por cliente potencial'],
+    'Frequency':          ['Frequency', 'Frecuencia'],
+    'Campaign name':      ['Campaign name', 'Nombre de la campaña'],
+    'Ad name':            ['Ad name', 'Nombre del anuncio'],
+    'Delivery status':    ['Ad set delivery', 'Delivery status', 'Delivery',
+                           'Entrega del conjunto de anuncios', 'Entrega'],
+    'Ad set ID':          ['Ad set ID', 'Adset ID', 'ID del conjunto de anuncios',
+                           'Identificador del conjunto de anuncios'],
+    'Ad ID':              ['Ad ID', 'ID del anuncio', 'Identificador del anuncio'],
+    'Campaign ID':        ['Campaign ID', 'ID de la campaña', 'Identificador de la campaña'],
+    'Currency':           ['Currency', 'Divisa', 'Moneda'],
+    'Attribution setting': ['Attribution setting', 'Configuración de atribución'],
+    'Reporting starts':   ['Reporting starts', 'Inicio del informe'],
+    'Reporting ends':     ['Reporting ends', 'Fin del informe'],
 }
+COLS_ID = ('Ad set ID', 'Ad ID', 'Campaign ID')   # se leen como texto (18 digitos)
+# Gasto: "Amount spent (USD)" / "Importe gastado (EUR)". Sin divisa en la cabecera
+# se toma de la columna Currency/Divisa fila a fila.
+SPEND = re.compile(r'^(AMOUNT SPENT|IMPORTE GASTADO)(?: \(([A-Z]{3})\))?$')
+
+def _ncol(c):
+    """Cabecera comparable: sin tildes, en mayusculas, espacios simples."""
+    return re.sub(r'\s+', ' ', _sin_tildes(c)).strip()
+
+_ALIAS_N = {_ncol(a): canon for canon, al in COLS_META.items() for a in al}
 
 def normaliza_meta(_d, _nombre):
-    """Renombra alias al nombre canonico y deriva 'Result type' si no viene."""
-    _cols = {str(c).strip(): c for c in _d.columns}
-    for _canon, _alias in ALIAS_META.items():
-        if _canon in _cols: continue
-        for _a in _alias:
-            if _a in _cols:
-                _d = _d.rename(columns={_cols[_a]: _canon})
-                print(f'  {_nombre}: columna "{_a}" -> "{_canon}"')
-                break
+    """Renombra cabeceras ES/EN al nombre canonico y deriva 'Result type'."""
+    _ren, _usadas = {}, set(c for c in _d.columns if c in COLS_META)
+    for canon, al in COLS_META.items():
+        if canon in _usadas: continue
+        _prior = {_ncol(a): i for i, a in enumerate(al)}
+        _cand = sorted((_prior[_ncol(c)], c) for c in _d.columns
+                       if c not in _ren and _ncol(c) in _prior)
+        if _cand:
+            _ren[_cand[0][1]] = canon; _usadas.add(canon)
+    _trad = {k: v for k, v in _ren.items() if str(k).strip() != v}
+    if _trad:
+        _es = any(_ncol(k) == _ncol('Nombre del conjunto de anuncios') for k in _trad)
+        print(f'  {_nombre}: {len(_trad)} columnas renombradas'
+              + (' (export de Meta en español)' if _es else '')
+              + ' -> ' + ', '.join(f'"{k}"→"{v}"' for k, v in list(_trad.items())[:6])
+              + (' …' if len(_trad) > 6 else ''))
+    _d = _d.rename(columns=_ren)
     # 'Result type' no existe en los exports basados en Leads. El panel no lo usa
     # hoy, pero se deriva para no romper nada que lo mire manana.
     if 'Result type' not in _d.columns:
@@ -234,29 +335,59 @@ def normaliza_meta(_d, _nombre):
             _d['Result type'] = ''
     return _d
 
-SPEND = re.compile(r'^Amount spent \(([A-Za-z]{3})\)$')
 _partes = []
 for f in xl:
+    _fn = os.path.basename(f)
     # Los IDs de Meta tienen 18 digitos: pandas los leeria como float y perderia
     # los ultimos digitos (un float64 solo guarda 15-16 cifras exactas). Hay que
-    # forzarlos a texto ANTES de leer el archivo entero.
+    # forzarlos a texto ANTES de leer el archivo entero (en ingles o en español).
     _cab = pd.read_excel(f, nrows=0).columns
-    _idc = [c for c in _cab if str(c).strip().lower() in
-            ('ad set id', 'adset id', 'ad id', 'campaign id',
-             'id del conjunto de anuncios', 'id de la campaña', 'id del anuncio')]
+    _idc = [c for c in _cab if _ALIAS_N.get(_ncol(c)) in COLS_ID]
     _d = pd.read_excel(f, dtype={c: str for c in _idc})
-    _d = normaliza_meta(_d, os.path.basename(f))
-    _d['_origen'] = os.path.basename(f)
-    _col = next((c for c in _d.columns if SPEND.match(str(c).strip())), None)
-    if not _col:
-        sys.exit(f'{os.path.basename(f)}: no encuentro la columna de gasto '
-                 f'("Amount spent (USD)" o "(EUR)"). Columnas: {list(_d.columns)[:12]}')
-    _mon = SPEND.match(str(_col).strip()).group(1).upper()
-    _d = _d.rename(columns={_col: 'gasto'}); _d['moneda'] = _mon
-    print(f'  {os.path.basename(f)}: {len(_d)} filas en {_mon}')
+    _d = normaliza_meta(_d, _fn)
+    _d['_origen'] = _fn
+    _sp = [(c, SPEND.match(_ncol(c))) for c in _d.columns]
+    _sp = [(c, m) for c, m in _sp if m]
+    if not _sp:
+        sys.exit(f'{_fn}: no encuentro la columna de gasto ("Amount spent (USD)" / '
+                 f'"Importe gastado (USD)"). Columnas: {list(_d.columns)[:14]}')
+    if len(_sp) > 1:
+        sys.exit(f'{_fn}: hay {len(_sp)} columnas de gasto ({[c for c, _ in _sp]}). '
+                 f'Exporta cada cuenta publicitaria en un Excel aparte.')
+    _col, _m = _sp[0]
+    _d = _d.rename(columns={_col: 'gasto'})
+    _cur = (_d['Currency'].astype(str).str.strip().str.upper()
+            if 'Currency' in _d.columns else None)
+    if _m.group(2):
+        _d['moneda'] = _m.group(2)
+        if _cur is not None:
+            _otra = _cur[~_cur.isin([_m.group(2), '', 'NAN', 'NONE'])]
+            if len(_otra):
+                print(f'AVISO: {_fn}: la cabecera dice {_m.group(2)} pero {len(_otra)} filas '
+                      f'traen divisa {sorted(_otra.unique())}. Se usa la de la cabecera.')
+    elif _cur is not None:
+        _d['moneda'] = _cur.where(_cur.str.len() == 3, 'USD')
+    else:
+        sys.exit(f'{_fn}: la columna "{_col}" no dice la divisa y no hay columna '
+                 f'Divisa/Currency. Exporta con "(USD)" o "(EUR)" en la cabecera.')
+    print(f'  {_fn}: {len(_d)} filas en {sorted(_d.moneda.dropna().unique())}')
     _partes.append(_d)
 df = pd.concat(_partes, ignore_index=True)
 print('monedas en el export:', sorted(df.moneda.unique()), '- el FX solo se aplica a USD')
+
+# ── Fila de TOTALES del "Raw Data Report" ─────────────────────────────────
+# El informe de datos sin procesar mete arriba una fila con el total del periodo:
+# nombre de conjunto y dia vacios, y TODO el gasto. Si pasa, sale como un tipster
+# "NAN" y la inversion total del panel se duplica. Una fila sin conjunto o sin dia
+# no se puede atribuir a nada, asi que se descarta siempre (y se dice cuanto era).
+_vac = lambda c: (df[c].isna() | df[c].astype(str).str.strip().isin(['', 'nan', 'NaT', 'None'])) \
+    if c in df.columns else pd.Series(False, index=df.index)
+_tot = _vac('Ad set name') | _vac('Day')
+if _tot.any():
+    _gt = pd.to_numeric(df.loc[_tot, 'gasto'], errors='coerce').fillna(0).sum()
+    print(f'fila(s) de totales descartadas: {int(_tot.sum())} sin conjunto o sin dia '
+          f'({_gt:,.2f} en divisa de origen) - es el total que añade el Raw Data Report')
+    df = df[~_tot].reset_index(drop=True)
 
 # ── Solapamiento entre varios Excel de Meta ───────────────────────────────
 # Dos exports que cubren el mismo conjunto y el mismo dia DUPLICAN el gasto: es
@@ -279,11 +410,12 @@ if len(_partes) > 1 and {'Ad set name', 'Day'} <= set(df.columns):
     print(f'solapamiento entre exports: ninguno ({len(_partes)} ficheros, claves disjuntas)')
 df = df.drop(columns=['_origen'])
 
-def eur(sub):
-    """Suma en EUR de filas de Meta, respetando la moneda de cada cuenta."""
+def eur(sub, col='gasto'):
+    """Suma en EUR de filas de Meta: EUR nativo tal cual; USD al FX DEL MES de la fila."""
     if not len(sub): return 0.0
-    f = np.where(sub['moneda'].astype(str).str.upper() == 'EUR', 1.0, FX)
-    return float((pd.to_numeric(sub['gasto'], errors='coerce').fillna(0) * f).sum())
+    _fx = sub['dia'].astype(str).str[:7].map(fx_de_mes).astype(float)
+    f = np.where(sub['moneda'].astype(str).str.upper() == 'EUR', 1.0, _fx)
+    return float((pd.to_numeric(sub[col], errors='coerce').fillna(0) * f).sum())
 
 # ── Subtotales del modo "Pivot table" ──────────────────────────────────────
 # Ads Reporting agrupado mete filas de subtotal marcadas como "All". Si llegan
@@ -291,7 +423,7 @@ def eur(sub):
 # convertir 'Day' a fecha, porque pd.to_datetime('All') reventaria.
 TODO={'All','Todos','Todas','Total','Totals'}
 _n0=len(df)
-COL_PLAT=next((c for c in ['Platform','Publisher platform','Plataforma'] if c in df.columns),None)
+COL_PLAT='Platform' if 'Platform' in df.columns else None   # ya normalizada (ES/EN)
 for _c in [x for x in ['Day','Placement',COL_PLAT] if x and x in df.columns]:
     df=df[~df[_c].astype(str).str.strip().isin(TODO)]
 df=df.reset_index(drop=True)
@@ -398,31 +530,67 @@ for c in NUM: df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
 # 'Delivery status' es como lo llama el Raw Data Report; 'Ad set delivery' el informe
 # clasico de Ads Reporting. Los valores (active, not_delivering, rejected...) son los
 # mismos y el panel ya los entiende.
-COL_EST = next((c for c in ['Ad set delivery', 'Ad Set Delivery', 'Delivery status',
-                            'Delivery', 'Entrega'] if c in df.columns), None)
-COL_CAM = next((c for c in ['Campaign name', 'Campaign Name', 'Nombre de la campaña'] if c in df.columns), None)
-COL_FRQ = next((c for c in ['Frequency', 'Frecuencia'] if c in df.columns), None)
+# (normaliza_meta ya ha traducido las cabeceras ES/EN a estos nombres canonicos)
+_opc = lambda c: c if c in df.columns else None
+COL_EST = _opc('Delivery status')
+COL_CAM = _opc('Campaign name')
+COL_FRQ = _opc('Frequency')
 # ID del conjunto: permite cruzar por identificador en vez de por nombre (Quanty v3).
-COL_ASID = next((c for c in ['Ad set ID', 'Ad Set ID', 'Ad set id', 'Adset ID',
-                             'ID del conjunto de anuncios'] if c in df.columns), None)
+COL_ASID = _opc('Ad set ID')
 # ID del anuncio: hace falta para repartir el gasto por plantilla creativa, porque
 # la plantilla es del ANUNCIO, no del conjunto. Sin el, la pestana de Creatividad
 # muestra entradas, pagos e ingresos por plantilla, pero no CPL ni ROAS.
-COL_ADID = next((c for c in ['Ad ID', 'Ad Id', 'Ad id', 'ID del anuncio']
-                 if c in df.columns), None)
+COL_ADID = _opc('Ad ID')
 if COL_FRQ: df[COL_FRQ] = pd.to_numeric(df[COL_FRQ], errors='coerce').fillna(0)
 print('Columnas opcionales -> estado:', COL_EST or 'NO', '| campaña:', COL_CAM or 'NO',
       '| frecuencia:', COL_FRQ or 'NO', '| id de conjunto:', COL_ASID or 'NO',
       '| id de anuncio:', COL_ADID or 'NO')
 
 df['dia'] = pd.to_datetime(df['Day']).dt.strftime('%Y-%m-%d')
+
+# ── FX por mes: se fija aqui, con los meses que trae el export ─────────────
+for _m in sorted(df.dia.str[:7].dropna().unique()): fx_de_mes(_m)
+print('FX por mes:', ' | '.join(f'{m} {FX_MES[m]} ({FX_ESTADO[m]})' for m in sorted(FX_MES)))
+_prov = [m for m in sorted(FX_MES) if FX_ESTADO[m] == 'provisional']
+if _prov:
+    print(f'AVISO: {len(_prov)} mes(es) ya cerrados sin tipo fijo en FX_CERRADO: {_prov}. '
+          f'Se convierten con el de hoy ({FX}) solo por ahora.')
+    print('       Añade dentro de FX_CERRADO, arriba del todo, el tipo de Wise del dia 1 siguiente:')
+    for m in _prov:
+        _sig = (pd.Period(m, 'M') + 1).start_time.strftime('%d/%m/%Y')
+        _hoy1 = HOY.strftime('%d/%m/%Y') == _sig
+        print(f"    '{m}': {FX if _hoy1 else '0.XXXX'},   # Wise {_sig}"
+              + ('   <- hoy es dia 1: el tipo de hoy ES el de cierre' if _hoy1 else ''))
+
+# ── Ventana de atribucion ──────────────────────────────────────────────────
+# Si en el mismo export conviven "7 dias clic" y "1 dia clic", los leads de Meta
+# no son comparables entre conjuntos. No afecta al CPL real (entradas de PP/Quanty),
+# pero si al embudo Clic->Lead. Solo se avisa.
+if 'Attribution setting' in df.columns:
+    _at = df.loc[pd.to_numeric(df['gasto'], errors='coerce').fillna(0) > 0, 'Attribution setting'] \
+            .dropna().astype(str).str.strip()
+    _at = _at[_at != '']
+    if _at.nunique() > 1:
+        _vc = (_at.value_counts(normalize=True) * 100).round(1)
+        print('AVISO: ventanas de atribucion mezcladas en el export (leads de Meta no comparables):')
+        for k, v in _vc.head(4).items(): print(f'    {v:5.1f}% | {k}')
+
 df['pref'] = df['Ad set name'].str.split('_').str[0].apply(norm_pref)
 df['clave'] = df['Ad set name'].apply(clave)
 df['pais'] = df['Ad set name'].apply(lambda x: norm_pais(campos(x)['pais']))
 PLAC = {'Feed': 'Feed', 'Instagram Reels': 'IG Reels', 'Facebook Reels': 'FB Reels', 'Instagram Stories': 'IG Stories',
         'Facebook Stories': 'FB Stories', 'Facebook profile feed': 'FB perfil', 'Marketplace': 'Marketplace',
         'Instagram search results': 'IG búsqueda', 'Search results': 'Búsqueda', 'In-stream reels': 'In-stream',
-        'Rewarded video': 'Vídeo recompensado', 'Native, banner & interstitial': 'Audience Network', 'Unknown': 'Desconocido'}
+        'Rewarded video': 'Vídeo recompensado', 'Native, banner & interstitial': 'Audience Network', 'Unknown': 'Desconocido',
+        # --- Meta en español: mismas etiquetas que en ingles, para no partir el historico ---
+        'Reels de Instagram': 'IG Reels', 'Reels de Facebook': 'FB Reels',
+        'Historias de Instagram': 'IG Stories', 'Historias de Facebook': 'FB Stories',
+        'Feed del perfil de Facebook': 'FB perfil', 'Resultados de búsqueda de Instagram': 'IG búsqueda',
+        'Resultados de la búsqueda': 'Búsqueda', 'Reels in-stream': 'In-stream',
+        'Vídeos in-stream': 'In-stream', 'Vídeo con premio': 'Vídeo recompensado',
+        'Nativo, banner e intersticial': 'Audience Network', 'Notificaciones de Facebook': 'FB Notificaciones',
+        'Facebook notifications': 'FB Notificaciones', 'Columna derecha': 'Columna derecha',
+        'Right column': 'Columna derecha', 'Explorar de Instagram': 'IG Explorar', 'Instagram Explore': 'IG Explorar'}
 PLAT={'facebook':'FB','instagram':'IG','messenger':'MSG','fb':'FB','ig':'IG'}
 def etiqueta(r):
     p=PLAC.get(r['Placement'],r['Placement'])
@@ -858,8 +1026,7 @@ for _p, (_fec, _nueva) in CORTE.items():
     _ini = _sub.dia.min()
     if _ini > _fec:
         _hu = D[(D.pref == _p) & (D.dia >= _fec) & (D.dia < _ini)]
-        _g = float((pd.to_numeric(_hu.gasto_usd, errors='coerce').fillna(0)
-                    * np.where(_hu.moneda.astype(str).str.upper() == 'EUR', 1.0, FX)).sum())
+        _g = eur(_hu, col='gasto_usd')
         if _g > 1:
             print(f'AVISO: "{NOMBRE[_p]}" se queda sin fuente de entradas entre el {_fec} y el {_ini}: '
                   f'{_g:.2f} EUR invertidos con {int(_hu.entradas.sum())} entradas. El corte descarta '
@@ -875,7 +1042,19 @@ for _e in EXCLUIDOS:
                        detalle=f"{_e['entradas']} entradas, {_e['pagos']} pagos - fuera del panel "
                                f"(no sigue la convencion de Meta ni es un generico de mes)"))
 
-out = dict(version=2, fx=FX, fx_fecha=FX_FECHA, fx_fuente='Wise (mid-market)',
+# ── Rango de Meta vs rango de entradas ────────────────────────────────────
+# Si Meta acaba antes que PremiumPay/Quanty, los ultimos dias salen con entradas y
+# sin inversion (CPL artificialmente bajo). Si acaba despues, al reves.
+_rm, _rp = (metaT.dia.min(), metaT.dia.max()), (s.dia.min(), s.dia.max())
+if len(metaT) and len(s) and _rm[1] != _rp[1]:
+    print(f'AVISO: Meta llega hasta el {_rm[1]} y las entradas hasta el {_rp[1]}. '
+          f'Exporta los dos con el mismo "Hasta" o el ultimo dia sale descuadrado.')
+
+# fx = tipo del MES EN CURSO (compatibilidad: el panel lo enseña en la cabecera).
+# fx_meses = el tipo de cada mes; el panel convierte cada fila con el de su mes.
+out = dict(version=2, fx=FX, fx_fecha=FX_FECHA, fx_fuente=FX_FUENTE, fx_origen=FX_ORIGEN,
+           fx_modo='mensual',
+           fx_meses={m: dict(fx=FX_MES[m], estado=FX_ESTADO[m]) for m in sorted(FX_MES)},
            generado=datetime.now().strftime('%Y-%m-%d %H:%M'),
            daily=D.to_dict('records'), placement=PL.to_dict('records'), retencion=ret,
            avisos=avisos, otros=otros, otros_daily=otros_daily, colisiones=COLIS, sin_conjunto=SIN, pendientes=PEND, pendientes_fecha=pd.Timestamp.now().strftime('%Y-%m-%d %H:%M'),
